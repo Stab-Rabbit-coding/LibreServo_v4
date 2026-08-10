@@ -13,6 +13,270 @@
 		(comment 2 "MCU: TI MSPM0G3518-Q1 (M0G3518QRHBRQ1), VQFN-32 RHB")
 	)
 	(lib_symbols
+		(symbol "LibreServo-v4.0.0:OPTIGA_TRUST_M"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "U"
+				(at 0 15.24 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "OPTIGA_TRUST_M"
+				(at 0 12.7 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "LibreServo-v4.0.0:Infineon_PG-USON-10-2-4_3x3mm_P0.5mm_EP1.7x2.5mm"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "docs/datasheets/infineon-optiga-trust-m-datasheet-en.pdf"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Infineon OPTIGA(TM) Trust M V3 secure element (sales code SLS 32AIA010ML, Extended Temperature Range -40C..+105C), PG-USON-10-2,-4 (3x3mm), I2C. Hardware root of trust for the servo: asymmetric PKI device authentication (ECDSA over a fab-provisioned private key + X.509 certificate) and ephemeral session-key agreement (ECDHE + key derivation). REPLACES the Infineon SLB9672 TPM 2.0 (REFERENCES.md [2]) that previously occupied U7 -- this is a DIFFERENT DEVICE CLASS, not a like-for-like substitution: the SLB9672 was a 32-pin SPI platform-integrity module (PCRs, attestation, a full TPM 2.0 stack), this is a 10-pin I2C key vault with a crypto engine. The servo needs an independent secure root of trust, not TPM machinery. This device does NOT perform per-frame message authentication and must not be placed in any control hot path: [45] p.28 SS7.2 permits only ONE protected operation per 5s t_max period, and any use of the fab-provisioned identity key is a protected operation. The sister ESC design records the full rationale and the security-monitor budget in Open-Secure-ESC docs/secure-element-architecture.md."
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Citation" "[45]"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Verification" "VERIFIED -- full 10-pin map read directly from the local copy of [45] (OPTIGA(TM) Trust M Datasheet, document release reference Z8F80311641-D, Rev. 3.70, 2024-10-09), p.17 Table 6 'Contact definitions and functions of PG-USON-10-2,-4 packages', corroborated against p.16 Figure 7 'PG-USON-10-2,-4 top view' (same pin arrangement drawn graphically) and p.12 Figure 2 'System integration schematic diagram' (which independently shows SCL on pin 8, SDA on pin 3, VCC on pin 10, GND on pin 1) and p.12 Figure 3 (RST on pin 9). Pin electrical types follow Table 6's own Type column: GND/VCC 'PWR' -> power_in; SDA/SCL 'I/O' -> bidirectional (SCL is modeled bidirectional rather than input because the device supports clock stretching, p.32 Table 23 CLK_STRETCHING, and Table 6 itself types it I/O); RST 'IN' -> input. The five NC contacts (02, 04, 05, 06, 07) are typed no_connect because Table 6 states 'Not connected/Do not connect externally. Shall be left floating' -- this is a datasheet requirement, not a layout preference, so they must NOT be tied to a rail. Device/feature facts also VERIFIED from the same local copy: variant selection SLS 32AIA010ML = V3 silicon, ETR -40C..+105C, PG-USON-10-2,-4 (p.8 Table 2); V3 crypto set ECC NIST P-256/384/521 + Brainpool P256/384/512 r1, RSA 1024/2048, AES 128/192/256, HMAC SHA-256/384/512, HKDF SHA-256/384/512, TLS v1.2 PRF, SHA-256, TRNG/DRNG (pp.8-9 Table 4); on-chip slots 4x ECC key, 2x RSA key, 1x AES key, 4x X.509 cert, 3x trust anchor, 4x monotonic counter, 1x platform binding secret, ~4.5kB arbitrary data (p.10 Figure 1); VCC 1.62-5.5V, I_CCAVG typ 14.0mA during a typical authentication profile (software-limitable 6-15mA), sleep typ 70uA, hibernate <2.5uA (p.20 Table 11); CC EAL6+ (high) hardware, PSA Level 3, CC certificate BSI-DSZ-CC-0961 / IFX_CCI_00000Bh (p.1, p.7 SS1.5); I2C up to 1MHz FM+ (p.7 SS1.5), default slave address 0x30 (p.34 SS A.2). FOOTPRINT: 'LibreServo-v4.0.0:Infineon_PG-USON-10-2-4_3x3mm_P0.5mm_EP1.7x2.5mm', authored by the sister Open-Secure-ESC repo's symbols/tools/gen_optiga_uson10_footprint.py and copied here unchanged with a 3D model from symbols/tools/gen_optiga_uson10_3dmodel.py. Package dimensions are VERIFIED from p.15 Figure 6 and p.16 Figure 7: body 3x3mm, 0.5mm pitch (basic), terminal 0.25mm wide x 0.4mm long, exposed pad 1.7 x 2.5mm, 0.6mm max height, 0.05mm max standoff. Figure 6 is a raster drawing, so each printed callout was additionally cross-checked by measuring the figure's own geometry in pixels against the dimensioned 3mm body (101.67 px/mm); all six features reproduced their callout (see the generator docstring for the table). The pin numbering (1 top-left, 1-5 down the left, 6-10 up the right) is from p.16 Figure 7. SEPARATELY FLAGGED, per AGENTS.md SS4: the LAND PATTERN (toe/heel/side fillets) is an IPC-7351-style engineering derivation, NOT an Infineon recommendation -- [45] publishes no recommended land pattern for this package. Its fillet values are taken from KiCad 9.0's Package_DFN_QFN:DFN-10-1EP_3x3mm_P0.5mm_EP1.7x2.5mm, an IPC-generated footprint for an identically dimensioned DFN-10 whose body, pitch, terminal width, exposed-pad size and pin numbering independently reproduce every dimension measured from Figure 6; the 10 signal lands in this repo's footprint are byte-identical to that KiCad footprint's. That KiCad footprint is NOT used directly because its own descr cites an unrelated Monolithic Power part (untraceable provenance under AGENTS.md SS1.2) and because its 3D model is not installed on this system. The exposed pad is intentionally NOT modeled as a symbol pin, consistent with how this repo models every other QFN/USON/LQFP part, and is correspondingly emitted as an UNNUMBERED land in the footprint so symbol and footprint pin counts cannot disagree; per p.16 Figure 7 it is 'n.c.' internally and exists to 'improve thermal dissipation', so it carries no net of its own -- connect it to a copper pour at layout time if desired. No thermal vias are emitted: at I_CCAVG 14mA the device dissipates on the order of 50mW."
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "OPTIGA_TRUST_M_0_1"
+				(rectangle
+					(start -5.08 10.16)
+					(end 5.08 -10.16)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "OPTIGA_TRUST_M_1_1"
+				(pin bidirectional line
+					(at -7.62 2.54 0)
+					(length 2.54)
+					(name "SDA"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at -7.62 0.0 0)
+					(length 2.54)
+					(name "SCL"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin input line
+					(at -7.62 -2.54 0)
+					(length 2.54)
+					(name "RST"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "9"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin no_connect line
+					(at 7.62 5.08 180)
+					(length 2.54)
+					(name "NC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin no_connect line
+					(at 7.62 2.54 180)
+					(length 2.54)
+					(name "NC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin no_connect line
+					(at 7.62 0.0 180)
+					(length 2.54)
+					(name "NC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin no_connect line
+					(at 7.62 -2.54 180)
+					(length 2.54)
+					(name "NC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin no_connect line
+					(at 7.62 -5.08 180)
+					(length 2.54)
+					(name "NC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 0.0 12.7 270)
+					(length 2.54)
+					(name "VCC"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "10"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin power_in line
+					(at 0.0 -12.7 90)
+					(length 2.54)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
 		(symbol "LibreServo-v4.0.0-eagle-import:+3V3"
 			(power)
 			(exclude_from_sim no)
@@ -3166,667 +3430,6 @@
 						(effects
 							(font
 								(size 0 0)
-							)
-						)
-					)
-				)
-			)
-			(embedded_fonts no)
-		)
-		(symbol "LibreServo-v4.0.0-eagle-import:SLB9672_TPM"
-			(pin_names
-				(offset 1.016)
-			)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "U"
-				(at -22.86 34.29 0)
-				(effects
-					(font
-						(size 1.778 1.5113)
-					)
-					(justify left bottom)
-				)
-			)
-			(property "Value" "SLB 9672AU2.0"
-				(at -22.86 -35.56 0)
-				(effects
-					(font
-						(size 1.778 1.5113)
-					)
-					(justify left bottom)
-				)
-			)
-			(property "Footprint" "Package_DFN_QFN:QFN-32-1EP_5x5mm_P0.5mm_EP3.6x3.6mm"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" "https://www.infineon.com/assets/row/public/documents/30/49/infineon-slb9672-tpm20-spi-fw16.xx-ds-rev1-3-2024-11-18-datasheet-en.pdf"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" "Infineon OPTIGA TPM SLB 9672AU2.0 FW16.xx, TPM 2.0 over SPI, PG-UQFN-32-1,-2, -40 to +105 degC. Pin numbers are the PG-UQFN-32 pads per datasheet Rev 1.3 Figure 6 and Tables 11-13; pin 33 is the exposed pad, internally tied to GND."
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "SLB9672_TPM_1_1"
-				(rectangle
-					(start -22.86 -33.02)
-					(end 22.86 33.02)
-					(stroke
-						(width 0.254)
-						(type default)
-					)
-					(fill
-						(type background)
-					)
-				)
-				(pin input line
-					(at -26.67 30.48 0)
-					(length 3.81)
-					(name "CS#"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "20"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin input line
-					(at -26.67 27.94 0)
-					(length 3.81)
-					(name "SCLK"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "19"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin input line
-					(at -26.67 25.4 0)
-					(length 3.81)
-					(name "MOSI"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "21"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin output line
-					(at -26.67 22.86 0)
-					(length 3.81)
-					(name "MISO"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "24"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin output line
-					(at -26.67 20.32 0)
-					(length 3.81)
-					(name "PIRQ#"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "18"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin input line
-					(at -26.67 17.78 0)
-					(length 3.81)
-					(name "RST#"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "17"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at -26.67 15.24 0)
-					(length 3.81)
-					(name "NC"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "6"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at -26.67 12.7 0)
-					(length 3.81)
-					(name "GPIO_02"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "7"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 26.67 30.48 180)
-					(length 3.81)
-					(name "NCI/VDD"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "8"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at 26.67 27.94 180)
-					(length 3.81)
-					(name "VDD"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "22"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at 26.67 25.4 180)
-					(length 3.81)
-					(name "VDD"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at 26.67 22.86 180)
-					(length 3.81)
-					(name "VDD"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "14"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at 26.67 20.32 180)
-					(length 3.81)
-					(name "GND"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at 26.67 17.78 180)
-					(length 3.81)
-					(name "GND"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "9"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at 26.67 15.24 180)
-					(length 3.81)
-					(name "GND"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "23"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at 26.67 12.7 180)
-					(length 3.81)
-					(name "GND"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "32"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 26.67 10.16 180)
-					(length 3.81)
-					(name "NCI/GND"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "16"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 7.62 180)
-					(length 3.81)
-					(name "NC"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "29"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 5.08 180)
-					(length 3.81)
-					(name "NC"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "30"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 2.54 180)
-					(length 3.81)
-					(name "GPIO_00"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "3"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 0.0 180)
-					(length 3.81)
-					(name "GPIO_01"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "4"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 -2.54 180)
-					(length 3.81)
-					(name "NCI"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "5"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 -5.08 180)
-					(length 3.81)
-					(name "NCI/VDD"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "10"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 -7.62 180)
-					(length 3.81)
-					(name "NCI"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "11"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 -10.16 180)
-					(length 3.81)
-					(name "NCI"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "12"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 -12.7 180)
-					(length 3.81)
-					(name "NCI"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "13"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 -15.24 180)
-					(length 3.81)
-					(name "NCI"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "15"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 -17.78 180)
-					(length 3.81)
-					(name "NCI"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "25"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 -20.32 180)
-					(length 3.81)
-					(name "NCI"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "26"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 -22.86 180)
-					(length 3.81)
-					(name "NCI"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "27"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 -25.4 180)
-					(length 3.81)
-					(name "NCI"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "28"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin no_connect line
-					(at 26.67 -27.94 180)
-					(length 3.81)
-					(name "NCI"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "31"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin power_in line
-					(at 26.67 -30.48 180)
-					(length 3.81)
-					(name "GND"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "33"
-						(effects
-							(font
-								(size 1.27 1.27)
 							)
 						)
 					)
@@ -30986,301 +30589,6 @@
 			)
 		)
 	)
-	(symbol
-		(lib_id "LibreServo-v4.0.0-eagle-import:SLB9672_TPM")
-		(at 120.65 410.21 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "45977aeb-9fcc-48d5-923b-1603eb3429d2")
-		(property "Reference" "U7"
-			(at 124.46000000000001 373.38 0)
-			(effects
-				(font
-					(size 1.778 1.5113)
-				)
-				(justify left bottom)
-			)
-		)
-		(property "Value" "SLB 9672AU2.0"
-			(at 124.46000000000001 377.19 0)
-			(effects
-				(font
-					(size 1.778 1.5113)
-				)
-				(justify left bottom)
-			)
-		)
-		(property "Footprint" "Package_DFN_QFN:QFN-32-1EP_5x5mm_P0.5mm_EP3.6x3.6mm"
-			(at 120.65 410.21 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(instances
-			(project ""
-				(path "/f57eb5ac-0a1b-4ac0-915c-20e575439506"
-					(reference "U7")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(wire
-		(pts
-			(xy 93.98 379.72999999999996) (xy 76.2 379.72999999999996)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "78e07077-acd5-4b2d-99ff-db9d2008823b")
-	)
-	(label "TPM_CS#"
-		(at 76.2 379.72999999999996 0)
-		(effects
-			(font
-				(size 1.5291 1.5291)
-			)
-			(justify right bottom)
-		)
-		(uuid "a413281c-48d0-40ee-a317-ddffd83139fe")
-	)
-	(wire
-		(pts
-			(xy 93.98 382.27) (xy 76.2 382.27)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "4952a86b-6038-4bb4-a4df-8618266457fd")
-	)
-	(label "SPI_CLK"
-		(at 76.2 382.27 0)
-		(effects
-			(font
-				(size 1.5291 1.5291)
-			)
-			(justify right bottom)
-		)
-		(uuid "f6186ffa-d062-4d90-9c27-f01169c955a6")
-	)
-	(wire
-		(pts
-			(xy 93.98 384.81) (xy 76.2 384.81)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "72843e2a-3918-4aa5-97b7-03fcbc6ab20b")
-	)
-	(label "SPI_OUT"
-		(at 76.2 384.81 0)
-		(effects
-			(font
-				(size 1.5291 1.5291)
-			)
-			(justify right bottom)
-		)
-		(uuid "499a06c8-8ed5-4068-94ea-100718af9aa1")
-	)
-	(wire
-		(pts
-			(xy 93.98 387.34999999999997) (xy 76.2 387.34999999999997)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "039aaf2b-9792-4ea6-8fe5-954d221a587e")
-	)
-	(label "SPI_IN"
-		(at 76.2 387.34999999999997 0)
-		(effects
-			(font
-				(size 1.5291 1.5291)
-			)
-			(justify right bottom)
-		)
-		(uuid "02e828c4-b60d-4fae-8610-7181a4a3eb0c")
-	)
-	(wire
-		(pts
-			(xy 93.98 389.89) (xy 76.2 389.89)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "ee474cb6-da7d-4fb0-bb6d-c97ee2cf15f0")
-	)
-	(label "TPM_PIRQ#"
-		(at 76.2 389.89 0)
-		(effects
-			(font
-				(size 1.5291 1.5291)
-			)
-			(justify right bottom)
-		)
-		(uuid "e9fdf743-e5c6-44bb-8393-d1fd8e3ca9ab")
-	)
-	(wire
-		(pts
-			(xy 93.98 392.42999999999995) (xy 76.2 392.42999999999995)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "4fcc0118-78a5-4fef-860f-0e08349d39d0")
-	)
-	(label "TPM_RST#"
-		(at 76.2 392.42999999999995 0)
-		(effects
-			(font
-				(size 1.5291 1.5291)
-			)
-			(justify right bottom)
-		)
-		(uuid "172d80f6-a026-4aec-a3f7-aca27491acba")
-	)
-	(symbol
-		(lib_id "LibreServo-v4.0.0-eagle-import:NC_MARKER")
-		(at 91.44 394.96999999999997 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "07fb7ab1-e53c-4a97-a2e0-a5c9ca5b0b37")
-		(property "Reference" "NC6"
-			(at 95.25 393.7 0)
-			(effects
-				(font
-					(size 1.778 1.5113)
-				)
-				(justify left bottom)
-			)
-		)
-		(property "Value" ""
-			(at 95.25 397.51 0)
-			(effects
-				(font
-					(size 1.778 1.5113)
-				)
-				(justify left bottom)
-			)
-		)
-		(property "Footprint" ""
-			(at 91.44 394.96999999999997 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(instances
-			(project ""
-				(path "/f57eb5ac-0a1b-4ac0-915c-20e575439506"
-					(reference "NC6")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "LibreServo-v4.0.0-eagle-import:NC_MARKER")
-		(at 91.44 397.51 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "1216b0ed-61b9-427a-bdd2-dc81a64d5290")
-		(property "Reference" "NC7"
-			(at 95.25 396.24 0)
-			(effects
-				(font
-					(size 1.778 1.5113)
-				)
-				(justify left bottom)
-			)
-		)
-		(property "Value" ""
-			(at 95.25 400.05 0)
-			(effects
-				(font
-					(size 1.778 1.5113)
-				)
-				(justify left bottom)
-			)
-		)
-		(property "Footprint" ""
-			(at 91.44 397.51 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(instances
-			(project ""
-				(path "/f57eb5ac-0a1b-4ac0-915c-20e575439506"
-					(reference "NC7")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(wire
-		(pts
-			(xy 147.32 379.72999999999996) (xy 165.1 379.72999999999996)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "3b60c5e2-6f8a-4658-81ce-5bfb3ffd0158")
-	)
-	(wire
-		(pts
-			(xy 147.32 382.27) (xy 165.1 382.27)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "0d3647ac-1861-48fa-98d1-f2738b3d9706")
-	)
-	(wire
-		(pts
-			(xy 147.32 384.81) (xy 165.1 384.81)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "dbfb3b46-e1c3-4c25-877c-2523981ad348")
-	)
-	(wire
-		(pts
-			(xy 147.32 387.34999999999997) (xy 165.1 387.34999999999997)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "e1811990-02dc-4258-b104-24db40f02d57")
-	)
 	(wire
 		(pts
 			(xy 165.1 379.72999999999996) (xy 165.1 382.27)
@@ -31363,66 +30671,6 @@
 				)
 			)
 		)
-	)
-	(wire
-		(pts
-			(xy 147.32 389.89) (xy 177.8 389.89)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "885b77ce-9b76-4e65-84ac-a4bce9853a7f")
-	)
-	(wire
-		(pts
-			(xy 147.32 392.42999999999995) (xy 177.8 392.42999999999995)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "a29c9ed0-d39f-4fd4-9838-ce91e8557a5f")
-	)
-	(wire
-		(pts
-			(xy 147.32 394.96999999999997) (xy 177.8 394.96999999999997)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "94da1f02-c0d1-48a8-b864-928d9048bee9")
-	)
-	(wire
-		(pts
-			(xy 147.32 397.51) (xy 177.8 397.51)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "3d9b2ee3-40c5-45f8-b370-6e086673c152")
-	)
-	(wire
-		(pts
-			(xy 147.32 400.04999999999995) (xy 177.8 400.04999999999995)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "e9e0d2b5-d001-4b9f-9c38-e841215cd623")
-	)
-	(wire
-		(pts
-			(xy 147.32 440.69) (xy 177.8 440.69)
-		)
-		(stroke
-			(width 0.1524)
-			(type solid)
-		)
-		(uuid "a9573638-91ff-4e62-b1ad-beadd92e4ff2")
 	)
 	(wire
 		(pts
@@ -31594,7 +30842,7 @@
 		)
 		(uuid "92f65852-1aa6-42c8-b9f3-a2be73c14b7a")
 	)
-	(label "TPM_CS#"
+	(label "SPARE_PA2"
 		(at 27.94 355.6 0)
 		(effects
 			(font
@@ -31704,7 +30952,7 @@
 		)
 		(uuid "1ecaa995-8c64-402c-ab36-ccf63439c551")
 	)
-	(label "TPM_PIRQ#"
+	(label "SPARE_PIRQ"
 		(at 27.94 363.22 0)
 		(effects
 			(font
@@ -32309,7 +31557,7 @@
 		)
 		(uuid "13389adc-1146-41b2-aa12-504eb80749e3")
 	)
-	(label "TPM_CS#"
+	(label "SPARE_PA2"
 		(at 104.14 248.92 0)
 		(effects
 			(font
@@ -32329,7 +31577,7 @@
 		)
 		(uuid "9d4b0376-b384-44af-b27f-3571d167393d")
 	)
-	(label "TPM_RST#"
+	(label "SE_RST"
 		(at 109.22 248.92 0)
 		(effects
 			(font
@@ -32339,7 +31587,7 @@
 		)
 		(uuid "68aad154-d2bc-430a-b3a2-193c642fa112")
 	)
-	(label "TPM_PIRQ#"
+	(label "SPARE_PIRQ"
 		(at 147.32 294.64 0)
 		(effects
 			(font
@@ -32355,4 +31603,460 @@
 		)
 	)
 	(embedded_fonts no)
+	(symbol
+		(lib_id "LibreServo-v4.0.0:OPTIGA_TRUST_M")
+		(at 120.65 410.21 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "be7f9593-5a54-4b28-a170-3918384e7223")
+		(property "Reference" "U7"
+			(at 120.65 394.97 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "OPTIGA_TRUST_M"
+			(at 120.65 397.51 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "LibreServo-v4.0.0:Infineon_PG-USON-10-2-4_3x3mm_P0.5mm_EP1.7x2.5mm"
+			(at 120.65 410.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "docs/datasheets/infineon-optiga-trust-m-datasheet-en.pdf"
+			(at 120.65 410.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Infineon OPTIGA(TM) Trust M V3 secure element (sales code SLS 32AIA010ML, Extended Temperature Range -40C..+105C), PG-USON-10-2,-4 (3x3mm), I2C. Hardware root of trust for the servo: asymmetric PKI device authentication (ECDSA over a fab-provisioned private key + X.509 certificate) and ephemeral session-key agreement (ECDHE + key derivation). REPLACES the Infineon SLB9672 TPM 2.0 (REFERENCES.md [2]) that previously occupied U7 -- this is a DIFFERENT DEVICE CLASS, not a like-for-like substitution: the SLB9672 was a 32-pin SPI platform-integrity module (PCRs, attestation, a full TPM 2.0 stack), this is a 10-pin I2C key vault with a crypto engine. The servo needs an independent secure root of trust, not TPM machinery. This device does NOT perform per-frame message authentication and must not be placed in any control hot path: [45] p.28 SS7.2 permits only ONE protected operation per 5s t_max period, and any use of the fab-provisioned identity key is a protected operation. The sister ESC design records the full rationale and the security-monitor budget in Open-Secure-ESC docs/secure-element-architecture.md."
+			(at 120.65 410.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Citation" "[45]"
+			(at 120.65 410.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Verification" "VERIFIED -- full 10-pin map read directly from the local copy of [45] (OPTIGA(TM) Trust M Datasheet, document release reference Z8F80311641-D, Rev. 3.70, 2024-10-09), p.17 Table 6 'Contact definitions and functions of PG-USON-10-2,-4 packages', corroborated against p.16 Figure 7 'PG-USON-10-2,-4 top view' (same pin arrangement drawn graphically) and p.12 Figure 2 'System integration schematic diagram' (which independently shows SCL on pin 8, SDA on pin 3, VCC on pin 10, GND on pin 1) and p.12 Figure 3 (RST on pin 9). Pin electrical types follow Table 6's own Type column: GND/VCC 'PWR' -> power_in; SDA/SCL 'I/O' -> bidirectional (SCL is modeled bidirectional rather than input because the device supports clock stretching, p.32 Table 23 CLK_STRETCHING, and Table 6 itself types it I/O); RST 'IN' -> input. The five NC contacts (02, 04, 05, 06, 07) are typed no_connect because Table 6 states 'Not connected/Do not connect externally. Shall be left floating' -- this is a datasheet requirement, not a layout preference, so they must NOT be tied to a rail. Device/feature facts also VERIFIED from the same local copy: variant selection SLS 32AIA010ML = V3 silicon, ETR -40C..+105C, PG-USON-10-2,-4 (p.8 Table 2); V3 crypto set ECC NIST P-256/384/521 + Brainpool P256/384/512 r1, RSA 1024/2048, AES 128/192/256, HMAC SHA-256/384/512, HKDF SHA-256/384/512, TLS v1.2 PRF, SHA-256, TRNG/DRNG (pp.8-9 Table 4); on-chip slots 4x ECC key, 2x RSA key, 1x AES key, 4x X.509 cert, 3x trust anchor, 4x monotonic counter, 1x platform binding secret, ~4.5kB arbitrary data (p.10 Figure 1); VCC 1.62-5.5V, I_CCAVG typ 14.0mA during a typical authentication profile (software-limitable 6-15mA), sleep typ 70uA, hibernate <2.5uA (p.20 Table 11); CC EAL6+ (high) hardware, PSA Level 3, CC certificate BSI-DSZ-CC-0961 / IFX_CCI_00000Bh (p.1, p.7 SS1.5); I2C up to 1MHz FM+ (p.7 SS1.5), default slave address 0x30 (p.34 SS A.2). FOOTPRINT: 'LibreServo-v4.0.0:Infineon_PG-USON-10-2-4_3x3mm_P0.5mm_EP1.7x2.5mm', authored by the sister Open-Secure-ESC repo's symbols/tools/gen_optiga_uson10_footprint.py and copied here unchanged with a 3D model from symbols/tools/gen_optiga_uson10_3dmodel.py. Package dimensions are VERIFIED from p.15 Figure 6 and p.16 Figure 7: body 3x3mm, 0.5mm pitch (basic), terminal 0.25mm wide x 0.4mm long, exposed pad 1.7 x 2.5mm, 0.6mm max height, 0.05mm max standoff. Figure 6 is a raster drawing, so each printed callout was additionally cross-checked by measuring the figure's own geometry in pixels against the dimensioned 3mm body (101.67 px/mm); all six features reproduced their callout (see the generator docstring for the table). The pin numbering (1 top-left, 1-5 down the left, 6-10 up the right) is from p.16 Figure 7. SEPARATELY FLAGGED, per AGENTS.md SS4: the LAND PATTERN (toe/heel/side fillets) is an IPC-7351-style engineering derivation, NOT an Infineon recommendation -- [45] publishes no recommended land pattern for this package. Its fillet values are taken from KiCad 9.0's Package_DFN_QFN:DFN-10-1EP_3x3mm_P0.5mm_EP1.7x2.5mm, an IPC-generated footprint for an identically dimensioned DFN-10 whose body, pitch, terminal width, exposed-pad size and pin numbering independently reproduce every dimension measured from Figure 6; the 10 signal lands in this repo's footprint are byte-identical to that KiCad footprint's. That KiCad footprint is NOT used directly because its own descr cites an unrelated Monolithic Power part (untraceable provenance under AGENTS.md SS1.2) and because its 3D model is not installed on this system. The exposed pad is intentionally NOT modeled as a symbol pin, consistent with how this repo models every other QFN/USON/LQFP part, and is correspondingly emitted as an UNNUMBERED land in the footprint so symbol and footprint pin counts cannot disagree; per p.16 Figure 7 it is 'n.c.' internally and exists to 'improve thermal dissipation', so it carries no net of its own -- connect it to a copper pour at layout time if desired. No thermal vias are emitted: at I_CCAVG 14mA the device dissipates on the order of 50mW."
+			(at 120.65 410.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "689e95f9-5265-4b03-bc1e-eda59ad9def9")
+		)
+		(pin "2"
+			(uuid "e50b745d-0cfe-4172-b33b-2d0dea916887")
+		)
+		(pin "3"
+			(uuid "7971ee68-cc6e-479e-8148-c4748f3bac7c")
+		)
+		(pin "4"
+			(uuid "759d3222-a351-41fb-88ee-92e2d33280c4")
+		)
+		(pin "5"
+			(uuid "69db9ca5-3aed-4465-80ba-369b4ab05505")
+		)
+		(pin "6"
+			(uuid "961f9bc8-2608-49bc-b281-2a4e614dafea")
+		)
+		(pin "7"
+			(uuid "6bc6caf1-c894-4284-86ff-0f828f698142")
+		)
+		(pin "8"
+			(uuid "9497185d-ce0a-494d-a78d-dd34de3e7078")
+		)
+		(pin "9"
+			(uuid "05a00789-8bb1-4111-8bb3-f46556257491")
+		)
+		(pin "10"
+			(uuid "7029f95d-80e2-4c69-acf7-ed7bb5c362a2")
+		)
+		(instances
+			(project ""
+				(path "/f57eb5ac-0a1b-4ac0-915c-20e575439506"
+					(reference "U7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "LibreServo-v4.0.0-eagle-import:R-US0402")
+		(at 90.17 407.67 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "5b634593-48e3-4bc6-83a3-1e1e5f1392a5")
+		(property "Reference" "R30"
+			(at 90.17 402.59 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "10k"
+			(at 90.17 405.13 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "LibreServo-v4.0.0:0402"
+			(at 90.17 407.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "80779f51-6171-4b78-9fe2-646533069fcf")
+		)
+		(pin "2"
+			(uuid "777eff92-8238-479d-9945-b35b32108f2d")
+		)
+		(instances
+			(project ""
+				(path "/f57eb5ac-0a1b-4ac0-915c-20e575439506"
+					(reference "R30")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "LibreServo-v4.0.0-eagle-import:R-US0402")
+		(at 78.74 410.21 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "638b74af-0ae3-45cd-9dd6-28d8e96815c0")
+		(property "Reference" "R31"
+			(at 78.74 405.13 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "10k"
+			(at 78.74 407.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "LibreServo-v4.0.0:0402"
+			(at 90.17 410.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "44a38921-eed6-4184-b71a-39ef93f76dd6")
+		)
+		(pin "2"
+			(uuid "7bd1f762-993b-402e-9c19-8fea2313eaa9")
+		)
+		(instances
+			(project ""
+				(path "/f57eb5ac-0a1b-4ac0-915c-20e575439506"
+					(reference "R31")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "LibreServo-v4.0.0-eagle-import:C-EU0402")
+		(at 139.7 402.59 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "e7d825e9-ce1a-4066-bf8a-a912fd069f30")
+		(property "Reference" "C43"
+			(at 139.7 394.97 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "100n"
+			(at 139.7 397.51 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "LibreServo-v4.0.0:0402"
+			(at 139.7 402.59 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "ead24a42-cb7a-4e90-886c-726991818fbc")
+		)
+		(pin "2"
+			(uuid "d9b84328-dbfd-4c34-aa02-c30ea961caa9")
+		)
+		(instances
+			(project ""
+				(path "/f57eb5ac-0a1b-4ac0-915c-20e575439506"
+					(reference "C43")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 95.25 407.67) (xy 113.03 407.67)
+		)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(uuid "8d95eb8b-abda-473f-91ab-2cb9ea6c78ac")
+	)
+	(label "SE_I2C_SDA"
+		(at 104.14 407.67 0)
+		(effects
+			(font
+				(size 1.5291 1.5291)
+			)
+			(justify right bottom)
+		)
+		(uuid "d7755c4a-a534-4895-a7d7-41ef0fbd574f")
+	)
+	(wire
+		(pts
+			(xy 83.82 410.21) (xy 113.03 410.21)
+		)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(uuid "bbce8fee-c4cc-4ede-8acd-3cc83b7ae6b7")
+	)
+	(label "SE_I2C_SCL"
+		(at 104.14 410.21 0)
+		(effects
+			(font
+				(size 1.5291 1.5291)
+			)
+			(justify right bottom)
+		)
+		(uuid "dae6bce0-8bf0-4a01-a193-222900e22f98")
+	)
+	(wire
+		(pts
+			(xy 95.25 412.75) (xy 113.03 412.75)
+		)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(uuid "98463a65-9dcc-430f-84c5-e93ba62f4323")
+	)
+	(label "SE_RST"
+		(at 95.25 412.75 0)
+		(effects
+			(font
+				(size 1.5291 1.5291)
+			)
+			(justify right bottom)
+		)
+		(uuid "a1e3c7d9-4854-4614-a56e-8713eae3fc3a")
+	)
+	(wire
+		(pts
+			(xy 85.09 407.67) (xy 80.01 407.67)
+		)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(uuid "c1f574aa-3fed-4b25-9558-ddb06e6590ad")
+	)
+	(label "+3V3"
+		(at 80.01 407.67 0)
+		(effects
+			(font
+				(size 1.5291 1.5291)
+			)
+			(justify right bottom)
+		)
+		(uuid "e237de59-9b90-49ea-88ac-1b26f641033d")
+	)
+	(wire
+		(pts
+			(xy 73.66 410.21) (xy 68.58 410.21)
+		)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(uuid "1351fc7a-108e-4318-822a-47b25668f6e1")
+	)
+	(label "+3V3"
+		(at 68.58 410.21 0)
+		(effects
+			(font
+				(size 1.5291 1.5291)
+			)
+			(justify right bottom)
+		)
+		(uuid "f030607a-eebf-497b-bc05-95ee95518175")
+	)
+	(wire
+		(pts
+			(xy 120.65 397.51) (xy 120.65 392.43)
+		)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(uuid "66e14441-76c2-4fc1-b899-3db2df29a0fe")
+	)
+	(label "+3V3"
+		(at 120.65 392.43 0)
+		(effects
+			(font
+				(size 1.5291 1.5291)
+			)
+			(justify right bottom)
+		)
+		(uuid "f5c8b1b4-80df-4c3c-ade6-7839e5fb0c56")
+	)
+	(wire
+		(pts
+			(xy 120.65 422.91) (xy 120.65 427.99)
+		)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(uuid "e0e950c6-56bf-445b-8c88-193b3f58a72b")
+	)
+	(label "GND"
+		(at 120.65 427.99 0)
+		(effects
+			(font
+				(size 1.5291 1.5291)
+			)
+			(justify right bottom)
+		)
+		(uuid "fae439a4-80a3-4863-bf26-8d64817fa819")
+	)
+	(wire
+		(pts
+			(xy 139.7 397.51) (xy 139.7 392.43)
+		)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(uuid "c1b4c88a-4294-42cf-a7ea-d61f75896180")
+	)
+	(label "+3V3"
+		(at 139.7 392.43 0)
+		(effects
+			(font
+				(size 1.5291 1.5291)
+			)
+			(justify right bottom)
+		)
+		(uuid "aa08f058-a18d-4bd5-aeb2-c83c2abf0db4")
+	)
+	(wire
+		(pts
+			(xy 139.7 405.13) (xy 139.7 417.83)
+		)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(uuid "b3b7e012-431d-4bc9-9c29-d8afb398965a")
+	)
+	(label "GND"
+		(at 139.7 417.83 0)
+		(effects
+			(font
+				(size 1.5291 1.5291)
+			)
+			(justify right bottom)
+		)
+		(uuid "e8f323c6-29df-48bc-bea3-51305811e67b")
+	)
+	(no_connect
+		(at 128.27 405.13)
+		(uuid "74ee4d8b-8bfa-49b6-8e6c-3652cc54315d")
+	)
+	(no_connect
+		(at 128.27 407.67)
+		(uuid "42a1628d-12ae-4dbf-aae0-c659bc17adbd")
+	)
+	(no_connect
+		(at 128.27 410.21)
+		(uuid "feeaf36d-9ee4-4e99-9332-eb93681c78f5")
+	)
+	(no_connect
+		(at 128.27 412.75)
+		(uuid "6110a28a-8ac3-4727-aacc-3c46aa2236bc")
+	)
+	(no_connect
+		(at 128.27 415.29)
+		(uuid "383c2676-a5fd-42be-b303-d01cf281c842")
+	)
 )

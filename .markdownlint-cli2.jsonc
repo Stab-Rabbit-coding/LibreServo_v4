@@ -9,8 +9,19 @@
     // Citation lists intentionally use bare URLs rather than link syntax.
     "MD034": false,
     // Markdown has no subscript/superscript syntax, and datasheet symbol names
-    // (C_VDD, C_VCORE, I_OUT) are unreadable without them.
-    "MD033": { "allowed_elements": ["sub", "sup"] }
+    // (C_VDD, C_VCORE, I_OUT) are unreadable without them. The remaining
+    // elements are inherited from upstream LibreServo, whose README.md and
+    // Gerber ReadMe fragments use inline HTML for logos and image layout;
+    // rewriting upstream presentation is out of scope for this fork. Kept as a
+    // narrow allowlist rather than disabling MD033 outright, so genuinely new
+    // inline HTML in files this fork authors is still flagged.
+    "MD033": { "allowed_elements": ["sub", "sup", "img", "a", "br", "BR", "p", "strong"] },
+    // Same upstream files: their <img> logos carry no alt text.
+    "MD045": false,
+    // Several inherited files (3D/README.md, the per-order Gerber ReadMe
+    // fragments) open with a sentence rather than a heading. They are upstream
+    // notes, not documents this fork authored.
+    "MD041": false
   },
   "globs": ["**/*.md"],
   "ignores": ["**/node_modules/**"]
