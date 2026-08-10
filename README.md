@@ -2,9 +2,9 @@
 
 An Open source controller to convert any servo motor to the best smart servo.
 
-This fork is focused improving the LibreServo design by moving to an TI MSPM0G3518-Q1 MCU, which provides simultaneous CAN-FD and RS485, and a robust cryptographic suite, along with an SLB9672 TPM.
+This fork is focused improving the LibreServo design by moving to an TI MSPM0G3518-Q1 MCU, which provides simultaneous CAN-FD and RS485, and a robust cryptographic suite, along with an Infineon OPTIGA™ Trust M secure element as an independent hardware root of trust.
 
-**Version 4.0.0.** Upstream LibreServo shipped v2.3.1 and had a v3 in mind. The changes in this fork — new MCU family, TPM, CAN-FD alongside RS-485, an isolated transceiver pair, and a hardware security stack — go past what that v3 was scoped to be, so this fork takes the next major number rather than a v3.x that would collide with it.
+**Version 4.0.0.** Upstream LibreServo shipped v2.3.1 and had a v3 in mind. The changes in this fork — new MCU family, a hardware root of trust, CAN-FD alongside RS-485, an isolated transceiver pair, and a hardware security stack — go past what that v3 was scoped to be, so this fork takes the next major number rather than a v3.x that would collide with it.
 
 **EDA tooling:** this fork has moved to **KiCad**. Autodesk EAGLE is end-of-life and no longer supported, so all new schematic and layout work is done in KiCad 9 under [`PCB/kicad/`](PCB/kicad/) as `LibreServo-v4.0.0`. The upstream EAGLE `.sch`/`.brd` files are kept in [`PCB/`](PCB/) for backward compatibility and design history; they stay frozen at v2.3.1 and are not renumbered. See [`PCB/ReadMe.md`](PCB/ReadMe.md).
 
@@ -19,7 +19,7 @@ A few characteristics of LibreServo:
     Communications: Isolated RS-485 and CAN-FD. Max Speed 9Mbps. Daisy chained. CRC-16
     Amp: Up to 16A continuous (WSD3069DN56) (Version >2.3)
     Micro-Controller (this fork): TI MSPM0G3518-Q1 (cortex-M0+@80MHz, 256KB flash, 128KB SRAM, CAN-FD + 5 UART, AES-256 with CMAC/GCM, key store, CSC secure boot). Upstream uses an STM32F301k8 (cortex-M4@72MHz).
-    Trusted Platform Module: SLB9672
+    Hardware root of trust: Infineon OPTIGA™ Trust M V3 secure element (I²C, `U7`) — device identity (ECDSA over a fab-provisioned key + X.509 certificate) and ephemeral session-key agreement (ECDHE). This is a **secure element, not a TPM**: the SLB9672 TPM 2.0 that previously occupied `U7` was removed 2026-08-10. A servo needs a key vault, not a platform-attestation stack. See [`PCB/OPTIGA-Trust-M-secure-element.md`](PCB/OPTIGA-Trust-M-secure-element.md).
     Position sensor: Magnetic encoder, 16 bits of resolution! 360 degrees (AEAT-8800). Using the servo motor potentiometer will be possible to lower the cost but will lost precision and some characteristics.
     For the encoder I have designed 3D parts to substitute the potentiometer and used the same hole/space than the original.
     LibreServo will generate their own curves (sine ramps, trapezoidal ramps, hermitian curves...)

@@ -1,5 +1,9 @@
 # Hardware upgrade notes: MCU swap to NXP S32K144, TPM (SLB9672) dropped in favor of on-chip CSEc
 
+> **Superseded again, 2026-08-10:** `U7` is now an Infineon OPTIGA™ Trust M V3
+> secure element, not a TPM and not absent. See
+> [`OPTIGA-Trust-M-secure-element.md`](OPTIGA-Trust-M-secure-element.md).
+>
 > **SUPERSEDED.** `U1` is no longer an S32K144 — it is now a TI **MSPM0G3518-Q1 (VQFN-32,
 > `M0G3518QRHBRQ1`)**. See [`MSPM0G3518-MCU-swap.md`](MSPM0G3518-MCU-swap.md) for the current
 > design, by way of [`MSPM0G3507-MCU-swap.md`](MSPM0G3507-MCU-swap.md) (an intermediate pass on
