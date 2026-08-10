@@ -1,17 +1,22 @@
 {
   // markdownlint-cli2 config — see https://github.com/DavidAnson/markdownlint
-  // Mirrors the sister Open-Secure-ESC project so both repos lint alike.
+  // Matches the sibling Griffing.tech design repos (Open-Secure-ESC).
   "config": {
     "default": true,
-    // REFERENCES.md follows IEEE citation style with long URLs and titles on a
-    // single line by design; wrapping them would harm readability.
+    // Design-change records cite datasheets and KiCad library paths that do
+    // not survive wrapping at 80 columns; wrapping them would harm readability.
     "MD013": false,
     // Citation lists intentionally use bare URLs rather than link syntax.
     "MD034": false,
-    // README.md and PCB/Gerbers/ReadMe.md are inherited from upstream
-    // LibreServo and use inline HTML for logos and image layout. Rewriting
-    // upstream presentation is out of scope for this fork.
-    "MD033": false,
+    // Markdown has no subscript/superscript syntax, and datasheet symbol names
+    // (C_VDD, C_VCORE, I_OUT) are unreadable without them. The remaining
+    // elements are inherited from upstream LibreServo, whose README.md and
+    // Gerber ReadMe fragments use inline HTML for logos and image layout;
+    // rewriting upstream presentation is out of scope for this fork. Kept as a
+    // narrow allowlist rather than disabling MD033 outright, so genuinely new
+    // inline HTML in files this fork authors is still flagged.
+    "MD033": { "allowed_elements": ["sub", "sup", "img", "a", "br", "BR", "p", "strong"] },
+    // Same upstream files: their <img> logos carry no alt text.
     "MD045": false,
     // Several inherited files (3D/README.md, the per-order Gerber ReadMe
     // fragments) open with a sentence rather than a heading. They are upstream
