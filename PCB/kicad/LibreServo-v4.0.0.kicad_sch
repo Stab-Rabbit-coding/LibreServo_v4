@@ -8037,7 +8037,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "LibreServo-v4.0.0-eagle-import:MSPM0G3519"
+		(symbol "LibreServo-v4.0.0-eagle-import:MSPM0G3518"
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
@@ -8077,7 +8077,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "TI MSPM0G3519-Q1 (VQFN-32, RHB, 5x5mm), Arm Cortex-M0+ @ 80MHz, 512KB flash (ECC, dual-bank with address swap for OTA) + 16KB data flash, 128KB SRAM (64KB with ECC/parity), native CAN-FD, 2x 12-bit 4Msps ADC (16 ch on this package), 12-bit DAC, 3x COMP, MATHACL, 12-ch DMA. AEC-Q100 Grade 1, wettable flank. Security stack (datasheet section 8.18 + TI SLAAE29A Table 1-2, column M0Gx5 1x): AESADV 128/256-bit with GCM/GMAC, CCM/CBC-MAC, CMAC, CBC, CTR; KEYSTORE secure key storage for up to 4 AES keys (write-only to the application, private bus to the AES engine); Customer Secure Code (CSC) secure boot with both hardware AES-CMAC and software ECDSA P-256 image authentication; flash write/read-execute/IP-protection firewalls; SRAM W^X; hardware monotonic counter for rollback protection; TRNG with health tests; CRC-16/32. PSA-L1 targeted, EVITA-Light. Pin names carry the physical port and the selected IOMUX function, both taken from the local datasheet copy Open-Secure-ESC/docs/datasheets/mspm0g3519-q1.pdf (SLASFA6B), Table 6-2 'Pin Attributes', column 'RHB PIN'. Symbol-only deviceset: no footprint yet. The existing Propio QFN32 land pattern is NOT reusable -- its pad numbering starts on the bottom row (TI RHB0032T starts on the left column, a 90-degree difference) and its pad span is 5.5mm vs TI's 4.78mm. TI's recommended land pattern (datasheet section 12, drawing 4224744/A): 32x pads 0.62 x 0.25mm on 0.5mm pitch, 4.78mm row-to-row span, 3.45 x 3.45mm exposed thermal pad (pad 33). See PCB/MSPM0G3519-MCU-swap.md."
+			(property "Description" "TI MSPM0G3518-Q1 (VQFN-32, RHB, 5x5mm), Arm Cortex-M0+ @ 80MHz, 256KB flash (ECC, dual-bank 2x128KB with address swap for OTA) + 16KB data flash, 128KB SRAM (64KB with ECC/parity), native CAN-FD, 2x 12-bit 4Msps ADC (16 ch on this package), 12-bit DAC, 3x COMP, MATHACL, 12-ch DMA. AEC-Q100 Grade 1, wettable flank. Security stack (datasheet section 8.18 + TI SLAAE29A Table 1-2, column M0Gx5 1x): AESADV 128/256-bit with GCM/GMAC, CCM/CBC-MAC, CMAC, CBC, CTR; KEYSTORE secure key storage for up to 4 AES keys (write-only to the application, private bus to the AES engine); Customer Secure Code (CSC) secure boot with both hardware AES-CMAC and software ECDSA P-256 image authentication; flash write/read-execute/IP-protection firewalls; SRAM W^X; hardware monotonic counter for rollback protection; TRNG with health tests; CRC-16/32. PSA-L1 targeted, EVITA-Light. Pin names carry the physical port and the selected IOMUX function, both taken from the local datasheet copy PCB/datasheets/mspm0g3518-q1.pdf (SLASFA6B; one data sheet document covers both MSPM0G3519-Q1 and MSPM0G3518-Q1 -- this design uses the 3518), Table 6-2 'Pin Attributes', column 'RHB PIN'. Symbol-only deviceset: no footprint yet. The existing Propio QFN32 land pattern is NOT reusable -- its pad numbering starts on the bottom row (TI RHB0032T starts on the left column, a 90-degree difference) and its pad span is 5.5mm vs TI's 4.78mm. TI's recommended land pattern (datasheet section 12, drawing 4224744/A): 32x pads 0.62 x 0.25mm on 0.5mm pitch, 4.78mm row-to-row span, 3.45 x 3.45mm exposed thermal pad (pad 33). Reconciled from a stray MSPM0G3519 symbol placement (512KB variant) to match the design intent recorded in README.md, the schematic title block, and PCB/MSPM0G3518-MCU-swap.md -- see TODO.md 3.2. See PCB/MSPM0G3518-MCU-swap.md."
 				(at 0 0 0)
 				(effects
 					(font
@@ -8094,7 +8094,7 @@
 					)
 				)
 			)
-			(symbol "MSPM0G3519_1_0"
+			(symbol "MSPM0G3518_1_0"
 				(polyline
 					(pts
 						(xy -20.32 20.32) (xy 20.32 20.32)
@@ -11063,7 +11063,7 @@
 		)
 		(uuid "b7c04d50-bb0d-46ff-8fff-13e25ca6a65d")
 	)
-	(text "MCU is now TI M0G3519QRHBRQ1 (MSPM0G3519-Q1). NRST MUST be pulled to VDD (R21/C40) --\nunlike the parts it replaces, this device will not leave reset otherwise. VCORE needs its own\n0.47uF tank cap (C39) and must not be connected to anything else. VREF+ is fed from\nVDDA-FILTRADO (C4 = 1uF is the required VREF decoupling). Security: AESADV-256 (GCM/CMAC),\nKEYSTORE (4 keys), CSC secure boot, flash firewalls, monotonic counter, TRNG -- this fully\nreplaces the S32K144 CSEc that was dropped. See PCB/MSPM0G3519-MCU-swap.md."
+	(text "MCU is now TI M0G3518QRHBRQ1 (MSPM0G3518-Q1). NRST MUST be pulled to VDD (R21/C40) --\nunlike the parts it replaces, this device will not leave reset otherwise. VCORE needs its own\n0.47uF tank cap (C39) and must not be connected to anything else. VREF+ is fed from\nVDDA-FILTRADO (C4 = 1uF is the required VREF decoupling). Security: AESADV-256 (GCM/CMAC),\nKEYSTORE (4 keys), CSC secure boot, flash firewalls, monotonic counter, TRNG -- this fully\nreplaces the S32K144 CSEc that was dropped. SE_I2C_SDA/SE_I2C_SCL now wired to PA8/PA1 -- see\nTODO.md 3.1/4.3. See PCB/MSPM0G3518-MCU-swap.md."
 		(exclude_from_sim no)
 		(at 27.94 317.5 0)
 		(effects
@@ -11085,7 +11085,7 @@
 		)
 		(uuid "c634d4a5-1f01-4ca6-9e97-d527de7c126b")
 	)
-	(text "MSPM0G3519-Q1 (VQFN-32 RHB, 5x5mm) @ 80MHz Cortex-M0+, 512KB/128KB, AEC-Q100 Grade 1"
+	(text "MSPM0G3518-Q1 (VQFN-32 RHB, 5x5mm) @ 80MHz Cortex-M0+, 256KB/128KB, AEC-Q100 Grade 1"
 		(exclude_from_sim no)
 		(at 27.94 220.98 0)
 		(effects
@@ -24935,7 +24935,7 @@
 		)
 	)
 	(symbol
-		(lib_id "LibreServo-v4.0.0-eagle-import:MSPM0G3519")
+		(lib_id "LibreServo-v4.0.0-eagle-import:MSPM0G3518")
 		(at 121.92 276.86 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -24952,7 +24952,7 @@
 				(justify left bottom)
 			)
 		)
-		(property "Value" "M0G3519QRHBRQ1"
+		(property "Value" "M0G3518QRHBRQ1"
 			(at 121.92 271.78 0)
 			(effects
 				(font
@@ -30794,7 +30794,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "65e0f5a8-37be-40b6-9c48-e6668d891e13")
 		(property "Reference" "R24"
 			(at 41.910000000000004 354.33000000000004 0)
@@ -30904,7 +30904,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "553b431b-e9ab-40e1-ac38-22ab24132aa9")
 		(property "Reference" "R25"
 			(at 41.910000000000004 361.95000000000005 0)
@@ -30952,7 +30952,7 @@
 		)
 		(uuid "1ecaa995-8c64-402c-ab36-ccf63439c551")
 	)
-	(label "SPARE_PIRQ"
+	(label "SE_I2C_SCL"
 		(at 27.94 363.22 0)
 		(effects
 			(font
@@ -31587,7 +31587,7 @@
 		)
 		(uuid "68aad154-d2bc-430a-b3a2-193c642fa112")
 	)
-	(label "SPARE_PIRQ"
+	(label "SE_I2C_SCL"
 		(at 147.32 294.64 0)
 		(effects
 			(font
@@ -31596,6 +31596,16 @@
 			(justify left bottom)
 		)
 		(uuid "05578ef7-1838-4821-90cf-c204efd6e895")
+	)
+	(label "SE_I2C_SDA"
+		(at 139.7 251.46 0)
+		(effects
+			(font
+				(size 1.5291 1.5291)
+			)
+			(justify left bottom)
+		)
+		(uuid "5be82faa-8e5b-4fde-8bc4-8e908282756e")
 	)
 	(sheet_instances
 		(path "/"

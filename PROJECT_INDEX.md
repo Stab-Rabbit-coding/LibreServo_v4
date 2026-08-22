@@ -5,7 +5,9 @@ governance in [`AGENTS.md`](AGENTS.md). Regenerate whenever files are added.
 
 Archived files, if any, belong in `ARCHIVE_INDEX.md` — not here.
 
-Generated 2026-08-10 (124 paths, 21 directories).
+Generated 2026-08-10 (124 paths, 21 directories); incrementally updated
+2026-08-22 to add `PCB/servo-bus-security-protocol.md` (not a full
+regeneration/recount of the rest of the index).
 
 ---
 
@@ -69,6 +71,7 @@ Generated 2026-08-10 (124 paths, 21 directories).
 - `RS485-CANFD-TPM-upgrade.md`
 - `ReadMe.md`
 - `S32K144-MCU-swap.md`
+- `servo-bus-security-protocol.md`
 
 ## `PCB/Gerbers/`
 

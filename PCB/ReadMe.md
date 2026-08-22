@@ -30,16 +30,19 @@ carry `rev 4.0.0` in their title block. The Gerbers have **not** been regenerate
 
 The importer names symbols after the **EAGLE symbol**, not the EAGLE deviceset, so
 `kicad/LibreServo-v4.0.0-eagle-import.kicad_sym` does not always agree with the part
-number. Most notably `U1` uses the symbol `MSPM0G3519` while the fitted part is a
-**MSPM0G3518-Q1** (`M0G3518QRHBRQ1`). Look parts up by reference designator, not by
-value.
+number. `U1`'s symbol had drifted to `MSPM0G3519` (the 512 KB sibling) while the fitted
+part is the **MSPM0G3518-Q1** (`M0G3518QRHBRQ1`, 256 KB) — corrected 2026-08-22, symbol
+renamed to `MSPM0G3518`; see [`MSPM0G3518-MCU-swap.md`](MSPM0G3518-MCU-swap.md) §6.2 and
+`TODO.md` 3.2. Look parts up by reference designator, not by value, since other
+importer/naming drift of this kind may still exist.
 
-### Known import defect: `#U1`, `#U5`, `#U6`
+### Resolved import defect: `#U1`, `#U5`, `#U6`
 
 The three parts that had no package in the EAGLE library — `U1` (MSPM0G3518-Q1), `U5`
-(ADM2587E) and `U6` (ADM3055E) — imported as `#`-prefixed pseudo-components, the class
-KiCad reserves for power flags. They are consequently **absent from the exported
-netlist** and are not yet real board parts. Fixing this is the first layout task; see
+(ADM2587E) and `U6` (ADM3055E) — originally imported as `#`-prefixed pseudo-components,
+the class KiCad reserves for power flags, which would have kept them out of the
+exported netlist and BOM. As of this pass all three carry real (non-`#`) reference
+designators in `kicad/LibreServo-v4.0.0.kicad_sch`; see
 [`MSPM0G3518-MCU-swap.md`](MSPM0G3518-MCU-swap.md) §6.2.
 
 ## Design-change records

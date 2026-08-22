@@ -319,21 +319,29 @@ binding symbol pins to pads, cross-checked against SLASFA6B Table 6-2's `RHB PIN
 - [x] **Pin-to-pad binding** — superseded as an EAGLE `<connects>` task. In KiCad the
       binding is made by assigning the footprint to the symbol; the mapping itself is the
       table in §3.1 and is unchanged.
-- [ ] **Promote `#U1` to a real component.** The KiCad EAGLE import turned every
-      package-less EAGLE part into a `#`-prefixed pseudo-component — the class KiCad reserves
-      for power flags — so `kicad/LibreServo-v4.0.0.kicad_sch` holds `#U1`, `#U5` and `#U6`,
-      and no others. Until the `#` is dropped they will not annotate, net-list or reach the
-      BOM as real parts.
-- [ ] **Correct `U1`'s part number in the KiCad file.** The import predates the '3519 → '3518
-      correction: the symbol is `LibreServo-v4.0.0-eagle-import:MSPM0G3519` and the value is
-      `M0G3519QRHBRQ1`. The fitted part is the **MSPM0G3518-Q1, `M0G3518QRHBRQ1`** — the
-      '3519 is not offered in RHB-32. Rename the symbol and fix the value. (The rest of the
-      import is current with the frozen EAGLE master, including the `CAN0_TX`/`CAN0_RX`
-      rename from §5.)
-- [ ] **Assign the footprint to `U1` in `kicad/LibreServo-v4.0.0.kicad_sch`** and update the
-      board. **The legacy Propio `QFN32` footprint is NOT reusable** — its pad 1 is on the
-      bottom row where TI's is on the left column (90° apart), and its span is 5.5 mm against
-      TI's 4.78 mm. Only the 3.45 mm thermal pad matches.
+- [x] **Promote `#U1` to a real component.** Superseded: `U1`, `U5` and `U6` are all
+      real (non-`#`) references in `kicad/LibreServo-v4.0.0.kicad_sch` as of this pass —
+      confirmed 2026-08-22. (The remaining `#U$n` reference designators in that file belong to
+      unrelated connectors/test points, not `U1`/`U5`/`U6`.)
+- [x] **Correct `U1`'s part number in the KiCad file** (2026-08-22, see `TODO.md` 3.2). The
+      placed symbol had drifted to `LibreServo-v4.0.0-eagle-import:MSPM0G3519` /
+      `M0G3519QRHBRQ1` while this document, the schematic title block, and `README.md` all
+      named the **MSPM0G3518-Q1** as the fitted part. Corrected note: SLASFA6B Table 5-1 *does*
+      list `M0G3519QRHBRQ1` as an offered 32-pin VQFN (RHB) part — the earlier claim that "the
+      '3519 is not offered in RHB-32" was itself wrong and is retracted here. The actual basis
+      for standardizing on the '3518 is the §1 memory-sizing/cost tradeoff (256 KB deemed
+      sufficient over 512 KB), not part unavailability. Both devices share one datasheet and
+      an identical RHB-32 pinout (§3), so the correction was a symbol/value/description rename
+      only — no pin remap. Symbol renamed to `LibreServo-v4.0.0-eagle-import:MSPM0G3518`,
+      Value corrected to `M0G3518QRHBRQ1`, and the Description property's memory figures and
+      doc references updated to match, in both `kicad/LibreServo-v4.0.0.kicad_sch` and
+      `kicad/LibreServo-v4.0.0-eagle-import.kicad_sym`.
+- [x] **Assign the footprint to `U1` in `kicad/LibreServo-v4.0.0.kicad_sch`** — already done:
+      `Footprint` = `Package_DFN_QFN:Texas_RHB0032E_VQFN-32-1EP_5x5mm_P0.5mm_EP3.45x3.45mm`,
+      matching this section's recommendation. **The legacy Propio `QFN32` footprint is NOT
+      reusable** for the `.kicad_pcb` placement — its pad 1 is on the bottom row where TI's is
+      on the left column (90° apart), and its span is 5.5 mm against TI's 4.78 mm. Only the
+      3.45 mm thermal pad matches. The `.kicad_pcb` side of this (§6.2 next item) is still open.
 - [ ] **`U1` placement in `kicad/LibreServo-v4.0.0.kicad_pcb`** — the footprint there is
       still `LibreServo-v2.3.1:QFN32` at the inherited STM32 location (EAGLE
       `x=4.78 y=8.4 rot=R270`). Body size is unchanged at 5 × 5 mm so the envelope fits, but
