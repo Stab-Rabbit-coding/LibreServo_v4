@@ -15,15 +15,15 @@ My goal with LibreServo is to make any standard servo the “smartest” one in 
 A few characteristics of LibreServo:
 
     Compatible with standard servo motors (No need to change the bottom cover of them!)
-    Voltage: From 4.5V up to 18V (Recommended: 5-14V)
-    Communications: Isolated RS-485 and CAN-FD. Max Speed 9Mbps. Daisy chained. CRC-16
-    Amp: Up to 16A continuous (WSD3069DN56) (Version >2.3)
+    Voltage: From 4.5V up to 18V (Recommended: 5-14V) — UNVERIFIED — needs primary source (see TODO.md): board-level voltage rating with no cited component (regulator/MOSFET Vds/etc.) derivation on file.
+    Communications: Isolated RS-485 (ADM2587E [47], 500 kbps) and isolated CAN-FD (ADM3055E [48], up to 12 Mbps demonstrated, ISO 11898-2:2016 rated to 5 Mbps). Daisy chained. CRC-16. (Corrected 2026-08-22 from an inherited, unsourced "Max Speed 9Mbps" claim that didn't match either transceiver's datasheet — see `TODO.md` 1.6.)
+    Amp: Up to 16A continuous (WSD3069DN56) (Version >2.3) — UNVERIFIED — needs primary source (see TODO.md): no local datasheet for WSD3069DN56 has been intaken against this figure.
     Micro-Controller (this fork): TI MSPM0G3518-Q1 (cortex-M0+@80MHz, 256KB flash, 128KB SRAM, CAN-FD + 5 UART, AES-256 with CMAC/GCM, key store, CSC secure boot). Upstream uses an STM32F301k8 (cortex-M4@72MHz).
     Hardware root of trust: Infineon OPTIGA™ Trust M V3 secure element (I²C, `U7`) — device identity (ECDSA over a fab-provisioned key + X.509 certificate) and ephemeral session-key agreement (ECDHE). This is a **secure element, not a TPM**: the SLB9672 TPM 2.0 that previously occupied `U7` was removed 2026-08-10. A servo needs a key vault, not a platform-attestation stack. See [`PCB/OPTIGA-Trust-M-secure-element.md`](PCB/OPTIGA-Trust-M-secure-element.md).
-    Position sensor: Magnetic encoder, 16 bits of resolution! 360 degrees (AEAT-8800). Using the servo motor potentiometer will be possible to lower the cost but will lost precision and some characteristics.
+    Position sensor: Magnetic encoder, 16 bits of resolution! 360 degrees (AEAT-8800). Using the servo motor potentiometer will be possible to lower the cost but will lost precision and some characteristics. — UNVERIFIED — needs primary source (see TODO.md): no local datasheet for AEAT-8800 has been intaken against this figure.
     For the encoder I have designed 3D parts to substitute the potentiometer and used the same hole/space than the original.
     LibreServo will generate their own curves (sine ramps, trapezoidal ramps, hermitian curves...)
-    Current sensor: +-15A ACS711
+    Current sensor: +-15A ACS711 — UNVERIFIED — needs primary source (see TODO.md): no local datasheet for ACS711 has been intaken against this figure.
 Communication Protocol: <a href="https://www.libreservo.com/en/articulo/libreservo-commands-part-one">LibreServo Commands</a><BR>
 <img src="https://www.libreservo.com/sites/libreservo.com/files/imagenes/Main-Encoder-PCB.jpg" width="550" height="412">
 

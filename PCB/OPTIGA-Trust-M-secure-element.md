@@ -89,19 +89,26 @@ against the final bus before fab.
 
 ---
 
-## 3. What is deliberately incomplete
+## 3. Wiring status
 
-`SE_RST` is connected and verified by netlist export:
-`U1` pin 18 (`PA14`) ↔ `U7` pin 9 (`RST`). A reset line needs only a plain
-GPIO, and `PA14` was freed by this very change.
+**Resolved 2026-08-22** (`TODO.md` §3.1/§4.3). `SE_RST` was already connected
+and verified by netlist export: `U1` pin 18 (`PA14`) ↔ `U7` pin 9 (`RST`). A
+reset line needs only a plain GPIO, and `PA14` was freed by this very change.
 
-**`SE_I2C_SDA` and `SE_I2C_SCL` reach the pull-ups and the secure element but
-are NOT attached to MCU pins.** Choosing those pins requires the
-MSPM0G351x-Q1 pin-multiplexing table (Table 6-2), whose column structure does
-not survive PDF text extraction, so no I²C-capable pin pair could be confirmed
-against the primary source. Assigning them anyway would be a fabricated pin
-claim, which `AGENTS.md` §1.3 forbids. Tracked as [`TODO.md`](../TODO.md) §3.1
-and §4.3 — this is the single item blocking a complete root-of-trust wiring.
+`SE_I2C_SDA` and `SE_I2C_SCL` now also reach the MCU: `PA8` (pin 12,
+`PINCM19`, `IOMUX PF3` = `I2C0_SDA`) and `PA1` (pin 2, `PINCM2`, `PF3` =
+`I2C0_SCL`) respectively, read directly from [46] (SLASFA6B) Table 6-2 with a
+column-structure-preserving PDF extraction (`pymupdf`, not the earlier
+extraction that lost the table's columns). Both are TPM-era spare pins (see
+`TODO.md` §3.3); `PA2` and `PA14`, the other two spares, were checked
+exhaustively against every `PINCMx.PF` option and offer no I²C function at
+all, so `PA1`/`PA8` were not a guess among several candidates — they are the
+only I²C-capable pair available among the freed pins, and happen to both be
+`I2C0`. The MCU-side connection is a same-name KiCad local label pair placed
+exactly at each pin's own coordinate (verified against the symbol's pin
+geometry, not estimated), matching the existing `SE_RST` convention on this
+sheet. `.kicad_pcb` routing is separate, still-open layout work — `TODO.md`
+§5.3.
 
 ---
 
@@ -122,11 +129,15 @@ Consequences, which are firmware obligations, not layout ones:
 3. **Session-context keys are exempt**, which is what makes an ECDHE handshake
    practical — but the identity key use that bootstraps the session is not.
 
-Open security items — anti-replay freshness, enabling the I²C Shielded
-Connection, the fail-behaviour on authentication failure (safety-critical), key
-revocation, and curve selection — are enumerated in [`TODO.md`](../TODO.md) §4.
-The sister ESC design records the same analysis in full at
-`Open-Secure-ESC/docs/secure-element-architecture.md`.
+Security-protocol decisions — anti-replay freshness, enabling the I²C
+Shielded Connection, the fail-behaviour on authentication failure
+(safety-critical), key revocation, and curve selection — are recorded in
+[`servo-bus-security-protocol.md`](servo-bus-security-protocol.md), tracked
+against [`TODO.md`](../TODO.md) §4.4–§4.10. The sister ESC design records a
+parallel analysis at `Open-Secure-ESC/docs/secure-element-architecture.md`
+(not accessible from this repository/session; the decisions in
+`servo-bus-security-protocol.md` were derived independently from this
+repo's own primary sources, not copied from it).
 
 ---
 
