@@ -17,7 +17,8 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
       PDFs. See sub-items.
   - [x] 1.4.a **(was blocking 3.1)** TI MSPM0G351x-Q1 SLASFA6B → [46]. Table
         6-2 read directly: `SE_I2C_SCL`→`PA1` (`PF3`=`I2C0_SCL`), `SE_I2C_SDA`
-        →`PA8` (`PF3`=`I2C0_SDA`), both spare, both `I2C0`. Unblocks 3.1.
+        →`PA8` (~~`PF3`~~ → **`PF4`**=`I2C0_SDA`, corrected 2026-08-23, see
+        3.4), both spare, both `I2C0`. Unblocks 3.1.
   - [x] 1.4.b ADM2582E/ADM2587E (`U5`) → [47]; ADM3055E/ADM3057E (`U6`) → [48].
         Formalizes citations already quoted verbatim in
         `PCB/MSPM0G3507-MCU-swap.md` but not previously in `REFERENCES.md`.
@@ -53,11 +54,19 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
   - [ ] 1.4.e Intake datasheets for WSD3069DN56, AEAT-8800, and ACS711 (none
         present in `PCB/datasheets/`) and cite their README.md claims, or
         correct the claims if the primary source disagrees.
-  - [ ] 1.4.f Intake the OPTIGA™ Trust M **Solution Reference Manual** ([45]
-        p.10 says it ships "as part of the package"; not present in
-        `PCB/datasheets/`). Needed before 4.4's Shielded Connection
-        platform-binding-secret pairing procedure can be implemented — see
-        `PCB/servo-bus-security-protocol.md` §4.4.
+  - [x] 1.4.f **Intake the OPTIGA™ Trust M Solution Reference Manual**
+        (2026-08-23). Located in Infineon's own GitHub organization —
+        `Infineon/optiga-trust-m-overview`, commit `a45b86bd` — which serves
+        the document the vendor website's anti-bot interstitial had blocked.
+        Cataloged as **[53]** with section/page citations read from the local
+        copy, alongside three supporting documents from the same repository:
+        **[54]** IFX I2C Protocol v2.03, **[55]** Keys and Certificates v3.10,
+        **[56]** Configuration Guide v2.2, plus **[57]** the OPTIGA™ Trust M
+        Host Library for C at pinned commit `67cfd0e58`. All four PDFs are now
+        in `PCB/datasheets/`. **Bonus finding:** the repo's existing copy of
+        [45] is byte-for-byte identical (MD5 `5e73fbc0…`) to the datasheet in
+        that same Infineon repository, which independently corroborates [45]'s
+        provenance — noted in its `REFERENCES.md` entry. Unblocks 4.4.
 
 ## 2. Repository / Naming
 
@@ -73,7 +82,9 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
       pin pair for the secure element** (2026-08-22, [46] Table 6-2, direct
       PDF text extraction with `pymupdf` preserved the column structure).
       Result: `PA1` (pin 2, `PINCM2`, `PF3`=`I2C0_SCL`) and `PA8` (pin 12,
-      `PINCM19`, `PF3`=`I2C0_SDA`) — both spares freed by the TPM removal (see
+      `PINCM19`, ~~`PF3`~~ → **`PF4`**=`I2C0_SDA` — the `PF` value here was
+      wrong and is corrected in 3.4; the *pin* choice stands) — both spares
+      freed by the TPM removal (see
       3.3), both `I2C0`, both confirmed as the *only* I²C-capable options
       among the four TPM-era spare pins (`PA1`, `PA2`, `PA8`, `PA14` — `PA2`
       and `PA14` were checked exhaustively against every `PF` row and offer no
@@ -105,6 +116,17 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
       `dnp` too, since TI's unused-pin guidance ([46]/SLASFA6B Table 6-20) is
       to configure it in firmware (GPIO output-low or input with internal
       pull), not to carry a permanent external pull-up to `+3V3`.
+- [x] 3.4 **IOMUX `PF` value for `SE_I2C_SDA` corrected** (2026-08-23). Items
+      3.1 and `PCB/OPTIGA-Trust-M-secure-element.md` §3 both recorded `PA8`'s
+      I²C function as `IOMUX PF3`. Re-read from [46] Table 6-2 (p. 18) with a
+      column-preserving extraction (`pdftotext -layout`), `PA8` is
+      `PF1`=`PA8`, `PF2`=`UART1_TX`, `PF3`=**`SPI0_CS0`**, `PF4`=**`I2C0_SDA`**.
+      `PA1`'s `PF3`=`I2C0_SCL` (p. 15) *is* correct; the likely origin of the
+      error is `PA0`, whose `PF3` genuinely is `I2C0_SDA`. **Pin selection,
+      net names and the schematic are unaffected** — `PA8` is still the right
+      pin — but firmware written from "PF3" would mux an SPI chip-select onto
+      the secure element's data line and the bus would never come up. Correct
+      values now in `firmware/pal/ls_board.h`; both documents amended.
 
 ## 4. Hardware — Trust / Security Subsystem
 
@@ -124,20 +146,38 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
       connections (KiCad same-name local labels), pin-coordinate-verified
       against the symbol's own pin geometry — no new wire geometry was
       guessed. `.kicad_pcb` routing is separate follow-up work — see 5.3.
-- [~] 4.4 **(High)** Enable the Trust M I²C **Shielded Connection** and
-      provision the platform binding secret ([45] p.1 Features, p.10 Fig. 1).
-      **Decision recorded** 2026-08-22 in
+- [x] 4.4 **(High) Shielded Connection enabled and platform-binding-secret
+      provisioning implemented** (2026-08-23, unblocked by 1.4.f). The
+      procedure is [53] §2.3.4 p. 20 Figure 12, written up in
       [`servo-bus-security-protocol.md`](PCB/servo-bus-security-protocol.md)
-      §4.4: enable it for all `U7` traffic. **Still open:** the platform
-      binding secret provisioning procedure needs the Trust M Solution
-      Reference Manual, not yet intaken — see 1.4.f. Not implemented (no
-      firmware exists yet, `TODO.md` 7).
+      §4.4.1–§4.4.4 and implemented in
+      [`firmware/trust/ls_trust_pairing.c`](firmware/trust/ls_trust_pairing.c);
+      the Shielded Connection itself is compiled in and defaulted to full
+      command+response protection in
+      [`firmware/config/ls_optiga_lib_config.h`](firmware/config/ls_optiga_lib_config.h).
+      **The finding that changes the design's character:** per [56] §2 Table 1
+      an OPTIGA™ Trust M **V3** part — the variant on this BOM — ships 0xE140
+      with a **Default value and read AC `ALW`**. Until pairing runs, the
+      Shielded Connection is keyed by a published constant and protects
+      nothing, so pairing is a mandatory manufacturing step, not a hardening
+      option. Two divergences from the upstream reference sequence are
+      deliberate and documented in §4.4.2: the host store is written and
+      verified **before** the irreversible metadata lock, and the final LcsO
+      is **operational**, not the example's `creation`. Two consequential
+      sub-findings are split out as **4.13** (where the host keeps the secret
+      — *not* the MCU KEYSTORE) and **7.6** (the host-side AES-128-CCM /
+      TLS-PRF the Shielded Connection obliges the MCU to supply).
 - [~] 4.5 **(High)** Define an anti-replay freshness scheme for the servo bus.
       **Decision recorded** 2026-08-22 in
       [`servo-bus-security-protocol.md`](PCB/servo-bus-security-protocol.md)
       §4.5: MAC'd per-frame monotonic counter with a receiver high-water
       mark, not the Trust M's 4 (boot-scale, and per 4.7 out of the per-frame
-      path anyway) monotonic counters. Counter width/scoping left to 7.2.
+      path anyway) monotonic counters. **Still open:** counter width and
+      per-link vs. global scoping, which §4.5 explicitly deferred to the
+      bus-protocol design. 7.2 delivered the *key* the counter is MAC'd under
+      (`ls_trust_establish_session_key`), but the frame format itself belongs
+      to the bus protocol of 7.1, which does not exist yet — so this stays
+      `[~]` rather than being closed on 7.2's completion.
 - [~] 4.6 **(High, safety-critical)** Define the behaviour on message
       authentication failure. **Decision recorded** 2026-08-22 in
       [`servo-bus-security-protocol.md`](PCB/servo-bus-security-protocol.md)
@@ -147,12 +187,23 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
       never fail-open. Threshold value and per-mechanism safe state are left
       to `TODO.md` 7's control-loop design.
 - [x] 4.7 **(Medium)** Decide where per-frame message authentication runs
-      (2026-08-22). **The MCU's own AESADV/CMAC engine** ([46] §8.18/§8.20,
-      confirmed against 1.4.a) — not the Trust M ([45] p.28 §7.2's 5 s
-      `t_max` budget rules it out independent of the latency numbers in
-      §4.4). See
+      (2026-08-22; **rationale corrected and strengthened 2026-08-23**).
+      **The MCU's own AESADV/CMAC engine** ([46] §8.18/§8.20) — not the
+      Trust M. The conclusion is unchanged; the *reason* given for it was
+      overstated. This repo had recorded [45] p.28 §7.2 as a flat "one
+      protected operation per 5 s, hard limit". [53] §4.6 shows that is the
+      permitted **sustained** usage profile: the hardware throttle only
+      begins at SEC = 128 and reaches `t_max` at SEC = 255 (§4.6.4), credit
+      accumulates while idle (§4.6.2), and — the load-bearing detail —
+      §4.6.1 Table 65 carves *session-context temporary keys* out of all
+      three key-use events. So a boot-time burst is affordable and an
+      ECDHE handshake is cheap; what remains impossible is per-frame use at
+      servo rates, which would pin SEC at its ceiling. Both
       [`servo-bus-security-protocol.md`](PCB/servo-bus-security-protocol.md)
-      §4.7. Firmware placement (key-slot selection) is 7.2 scope.
+      §4.7 and
+      [`OPTIGA-Trust-M-secure-element.md`](PCB/OPTIGA-Trust-M-secure-element.md)
+      §4 amended. Firmware honours it: `ls_trust.c` reads OID 0xE0C5 before
+      spending budget and refuses rather than issuing into a throttle.
 - [~] 4.8 **(Medium)** Design fleet key lifecycle and revocation. **Partial
       decision recorded** 2026-08-22 in
       [`servo-bus-security-protocol.md`](PCB/servo-bus-security-protocol.md)
@@ -175,14 +226,80 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
       Re-verified 2026-08-22 against both [45] and [46] directly — no PQC
       primitive found in either. Closed as a recorded, accepted limitation
       per its own text, not an open action.
+- [ ] 4.11 **(Low)** Confirm that [56] (Configuration Guide, Rev 2.2) applies to
+      the **/L** sales code. Its title page enumerates SLS 32AIA010M**H/S/K/M**
+      and does not list the **/L** on this BOM ([45] p. 8 Table 2,
+      SLS 32AIA010ML). The document's subject is the *provisioning variant*
+      (V1/V3/Express/MTR), which is orthogonal to the temperature/packing
+      suffix, and [55]'s title page does carry **/L** for the same V3 product
+      version — so the V3 column is taken as applying. **That is an inference,
+      recorded as one** in `REFERENCES.md` [56]. 4.4's whole rationale rests on
+      the V3 0xE140 row, so it is worth confirming with Infineon rather than
+      leaving inferred.
+- [ ] 4.12 **(Low)** Intake the *OPTIGA™ Trust M Release Notes* v3.02, present
+      in `Infineon/optiga-trust-m-overview` `docs/pdf/` but deliberately not
+      taken in the 2026-08-23 pass — no current design claim depends on a
+      release-note item. Fetch it before relying on any firmware-revision-
+      specific behaviour of `U7`.
+- [ ] 4.13 **(High, blocks provisioning)** Decide and configure **where the MCU
+      stores the platform binding secret**, and the flash/debug protection
+      around it. Opened by a correction: `servo-bus-security-protocol.md`
+      §4.4 had proposed the MCU **KEYSTORE**, and it cannot serve —
+      [46] §8.21 p. 89 describes the Keystore as a deposit-then-use-by-AESADV
+      store for 128/256-bit keys "without leaking any key data to observers"
+      (no software readback), while [53] §6.6.1 requires the host library to
+      read the up-to-64-byte secret back through `pal_os_datastore_read`. The
+      secret must live in readable MCU NVM protected by static write
+      protection, flash read-out protection and the one-way NONMAIN debug
+      lockdown of [49] §§2.6/3.2. **This blocks provisioning any unit**,
+      because NONMAIN lockdown is a one-way per-unit door. The KEYSTORE
+      remains correct for the *derived session CMAC key* of 4.7. Interface is
+      already carved out at
+      [`firmware/pal/ls_secure_store.h`](firmware/pal/ls_secure_store.h).
+- [ ] 4.14 **(Medium)** Implement runtime platform-binding-secret rotation
+      ([53] §2.3.6 p. 21 Figure 14), which 4.4's access-condition choice
+      deliberately keeps possible (the change AC retains its `Conf(0xE140)`
+      branch). [53] §6.5.8 recommends rotation; [53] §5.1's NVM budget
+      (2 million tearing-safe programming cycles across all objects; retention
+      declining toward ½ year past ~40 000 cycles of an object) is why it must
+      be scheduled rather than done casually. Needs a rotation interval
+      derived from the expected service life, not a guess.
 
 ## 5. Hardware — PCB Layout
 
-- [ ] 5.1 Place `U7`, `R30`, `R31`, `C43` on `LibreServo-v4.0.0.kicad_pcb`.
+> **Finding, 2026-08-23 — this section's premise was wrong, and the items below
+> are re-scoped accordingly.** `LibreServo-v4.0.0.kicad_pcb` is still the
+> **upstream LibreServo v2.3.1 EAGLE import**, not a v4 layout. Enumerating its
+> footprints: `U1` is an **STM32F301/2** in QFN32, `U5` is a **SiT3485**
+> RS-485 transceiver in MSOP-8, and there is no `U6`, `U7`, `R24`, `R25`,
+> `R30`, `R31` or `C43` anywhere in the file. **None** of the v4 schematic work
+> has reached the board: not the MSPM0G3518-Q1 MCU swap (§3), not the
+> ADM2587E/ADM3055E isolated-transceiver upgrade, and not the secure element.
+>
+> Placing `U7` onto that layout in isolation — item 5.1 as written — would
+> produce a board that *looks* further along than it is while remaining
+> unbuildable, because the MCU it must connect to is a different part, in a
+> different package, with a different pinout. That is a worse outcome than
+> leaving it undone, so it has not been done.
+
+- [ ] 5.0 **(Blocks 5.1–5.3)** Re-lay `LibreServo-v4.0.0.kicad_pcb` against the
+      current schematic, or decide explicitly that the v4 board is a new layout
+      rather than an edit of the v2.3.1 import. Until this is settled, the
+      three items below have no valid starting point.
+- [ ] 5.1 Place `U7`, `R30`, `R31`, `C43` on the v4 layout. **Blocked on 5.0.**
       The secure element is currently schematic-only.
-- [ ] 5.2 Remove the SLB9672 footprint and its support parts from the layout.
-- [ ] 5.3 Route the I²C pair with attention to length and coupling once 3.1
-      fixes the MCU pins.
+- [x] 5.2 ~~Remove the SLB9672 footprint and its support parts from the
+      layout.~~ **Moot, closed 2026-08-23.** There is no SLB9672 footprint in
+      `LibreServo-v4.0.0.kicad_pcb` — the TPM never reached this layout in the
+      first place (see the finding above). Nothing to remove.
+- [ ] 5.3 Route the `SE_I2C_SCL`/`SE_I2C_SDA` pair with attention to length and
+      coupling. **Blocked on 5.0 and 5.1.** Two inputs are ready when it
+      unblocks: the MCU pins are fixed (§3.1, §3.4 — `PA1` pin 2 and `PA8`
+      pin 12), and the firmware runs the bus at Fast-mode 400 kHz
+      (`firmware/pal/ls_board.h`), which is the speed [53] §4.4.3 Table 64
+      measures the part's own command timings at. Running Fm+ instead would
+      require re-checking `R30`/`R31` against the fabricated board's measured
+      bus capacitance, per [45] p. 12.
 
 ## 6. Schematic Hygiene
 
@@ -200,13 +317,85 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
 - [ ] 7.1 Firmware is a full rewrite, not a port: `Src/`, `Inc/` and
       `Test_LibreServo_v2.ioc` target ST's HAL and the STM32F302/G431 register
       set, while this fork's MCU is a TI MSPM0. Nothing in `Src/` reflects the
-      current hardware.
-- [ ] 7.2 Write the Trust M driver layer (I²C, Shielded Connection, ECDSA
-      device authentication, ECDHE session-key agreement), honouring the 5 s
-      protected-operation budget from 4.7.
+      current hardware. **Unchanged by 7.2** — the new `firmware/` tree is the
+      security subsystem only and deliberately does not touch `Src/`/`Inc/`.
+- [x] 7.2 **Trust M driver layer written** (2026-08-23) — I²C, Shielded
+      Connection, ECDSA device authentication, ECDHE session-key agreement.
+      Delivered as [`firmware/`](firmware/); see
+      [`firmware/README.md`](firmware/README.md) for the architecture, the
+      upstream pinning and attribution chain, and the findings.
+      - `firmware/config/ls_optiga_lib_config.h` — feature selection, a
+        deliberate narrowing of [57]'s V3 profile, selected through the
+        upstream `OPTIGA_LIB_EXTERNAL` hook rather than by shadowing a header.
+      - `firmware/pal/` — the full platform abstraction layer for the
+        MSPM0G3518-Q1: I²C (register map read from [52] ch. 25), GPIO, OS
+        timer/event/lock/memory, datastore, logger, and the host-side
+        AES-128-CCM and TLS-1.2-PRF the Shielded Connection requires.
+      - `firmware/trust/` — the servo-facing API: `ls_trust_init`,
+        `ls_trust_authenticate` (ECDSA over 0xE0F0),
+        `ls_trust_establish_session_key` (ephemeral keypair → ECDH → TLS-PRF,
+        all in session context 0xE100), `ls_trust_pair_with_host` (4.4), plus
+        the OID map and security-monitor constants from [53] §5.4/§4.6.
+      - `firmware/tests/` — host verification of the two specified
+        constructions: **52/52** AES-128-CCM outputs byte-identical to
+        `python-cryptography`'s `AESCCM` across every legal nonce and tag
+        length of [59] Appendix A.1, including [59] Appendix C's three worked
+        vectors; **24/24** TLS-PRF outputs identical to an independent
+        RFC 5246 §5 implementation.
+      - Verification: all 12 sources compile clean under
+        `-Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wcast-qual` against
+        the real upstream headers, and a link against the full host library
+        leaves **only** the eight symbols of the three declared
+        application-supplied contracts unresolved (7.3, 4.13, 7.6) — no
+        accidental gaps.
+      Follow-ups split out below rather than left implicit: 7.3, 7.4, 7.5, 7.6.
+- [ ] 7.3 **(Blocks bring-up)** Design the MCU clock tree and correct
+      `LS_I2C_FUNCTIONAL_CLK_HZ` in
+      [`firmware/pal/ls_board.h`](firmware/pal/ls_board.h). It currently holds
+      32 MHz, marked `UNVERIFIED — needs primary source`, chosen only because
+      that is the value [52] §25.2.1 works its own TPR example with, so the
+      derived divisor is checkable against the document. `pal_i2c_init()`
+      recomputes TPR from this constant — correct the constant, never
+      hand-patch the TPR.
+- [ ] 7.4 **(Low)** Convert `firmware/pal/ls_pal_i2c.c` from blocking transfers
+      to interrupt-driven ones. The PAL contract permits blocking and it is the
+      right first implementation — 4.7 keeps `U7` out of the control hot path,
+      so the worst blocking window is one APDU at 400 kHz during boot. **Do not
+      do this before 7.1's control loop exists** to measure against; optimising
+      against a guess is how the wrong thing gets optimised.
+- [ ] 7.5 **(Low)** Report two upstream header-guard bugs to Infineon
+      ([57] at commit `67cfd0e58`), both found while narrowing the feature set
+      and both invisible with the default V3 profile:
+      (a) `include/cmd/optiga_cmd.h:596` guards `optiga_cmd_decrypt_sym` on
+      `SYM_DECRYPT || HMAC_VERIFY || CLEAR_AUTO_STATE`, but its parameter type
+      `optiga_decrypt_sym_params_t` (`include/common/optiga_lib_common.h:524`)
+      is guarded on `SYM_ENCRYPT || SYM_DECRYPT` alone;
+      (b) `src/crypt/optiga_crypt.c` wraps all three `optiga_crypt_tls_prf_shaXXX`
+      bodies (lines 506–642) in one combined guard while the enum values they
+      reference are each guarded individually. Workarounds and reasoning are in
+      `firmware/config/ls_optiga_lib_config.h`.
+- [ ] 7.6 **(High, blocks bring-up)** Bind
+      [`firmware/pal/ls_crypto_backend.h`](firmware/pal/ls_crypto_backend.h) to
+      a vetted AES-128 block cipher and HMAC-SHA256. Opened by 4.4: enabling
+      the Shielded Connection makes `pal_crypt_tls_prf_sha256`,
+      `pal_crypt_encrypt_aes128_ccm` and `pal_crypt_decrypt_aes128_ccm` a
+      link-time requirement, because the IFX I²C presentation layer [54]
+      protects every APDU with AES-128-CCM on the host side — a cost that does
+      not appear in [45]. The *constructions* are implemented and verified
+      (`firmware/pal/ls_pal_crypt.c`, `firmware/tests/`); the primitives
+      underneath are deliberately not, and must not be hand-rolled. Candidates:
+      MSPM0 AESADV ([46] §8.20; [49] Table 5-3 gives 0.95 µs per 128-bit block
+      at 80 MHz) plus a software SHA-256, or Mbed TLS as [57]'s own reference
+      PALs use. Whichever is chosen must be constant-time with respect to key
+      material.
 
 ---
 
 *Seeded by Claude Opus 5 (`claude-opus-5`) under human direction, 2026-08-10,
-alongside the SLB9672 → OPTIGA™ Trust M swap. Items outside §2/§4 are recorded
-from repository inspection and are not claimed to be an exhaustive backlog.*
+alongside the SLB9672 → OPTIGA™ Trust M swap; extended by Claude Sonnet 5
+(`claude-sonnet-5`) under human direction, 2026-08-22 (§1.4, §1.6, §3, §4.4–4.10);
+extended again by Claude Opus 5 (`claude-opus-5`) under human direction,
+2026-08-23 (1.4.f, 3.4, 4.4, 4.7, 4.11–4.14, §5 re-scope, 7.2–7.6), on intake of
+the OPTIGA™ Trust M Solution Reference Manual and the delivery of `firmware/`.
+Items outside §2/§4 are recorded from repository inspection and are not claimed
+to be an exhaustive backlog.*

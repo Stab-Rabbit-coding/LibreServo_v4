@@ -1,0 +1,7 @@
+# Upstream dependency fetched by firmware/tools/fetch_optiga_host_library.sh.
+# Pinned by commit in that script and cataloged in REFERENCES.md as [57];
+# deliberately not vendored, so it must not be committed either.
+firmware/external/
+
+# Host-test build products.
+*.o

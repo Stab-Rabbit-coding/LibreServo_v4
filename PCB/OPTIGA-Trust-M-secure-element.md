@@ -96,10 +96,27 @@ and verified by netlist export: `U1` pin 18 (`PA14`) ↔ `U7` pin 9 (`RST`). A
 reset line needs only a plain GPIO, and `PA14` was freed by this very change.
 
 `SE_I2C_SDA` and `SE_I2C_SCL` now also reach the MCU: `PA8` (pin 12,
-`PINCM19`, `IOMUX PF3` = `I2C0_SDA`) and `PA1` (pin 2, `PINCM2`, `PF3` =
-`I2C0_SCL`) respectively, read directly from [46] (SLASFA6B) Table 6-2 with a
-column-structure-preserving PDF extraction (`pymupdf`, not the earlier
-extraction that lost the table's columns). Both are TPM-era spare pins (see
+`PINCM19`, IOMUX address 0x40428048) and `PA1` (pin 2, `PINCM2`, IOMUX address
+0x40428004) respectively, read directly from [46] (SLASFA6B) Table 6-2 with a
+column-structure-preserving PDF extraction.
+
+**IOMUX `PF` value corrected 2026-08-23.** This paragraph previously gave
+*both* pins' I²C function as `PF3`. Re-read with `pdftotext -layout`,
+[46] Table 6-2 gives:
+
+| Pin | `PINCM` | IOMUX addr | I²C function | `PF` |
+| --- | --- | --- | --- | --- |
+| `PA1` | `PINCM2` | 0x40428004 | `I2C0_SCL` | **3** ✔ as previously recorded |
+| `PA8` | `PINCM19` | 0x40428048 | `I2C0_SDA` | **4** ✘ was recorded as 3 |
+
+`PA8`'s `PF3` is `SPI0_CS0`, not `I2C0_SDA`. (The likely origin of the error is
+`PA0`, one page earlier, whose `PF3` genuinely *is* `I2C0_SDA`.) **The pin
+selection, the net names and the schematic are all unaffected** — `PA8` remains
+the correct `I2C0` SDA pin — but firmware written from the "PF3" figure would
+mux an SPI chip-select onto the secure element's data line and the bus would
+never come up. The correct values are encoded in
+[`../firmware/pal/ls_board.h`](../firmware/pal/ls_board.h); tracked as
+`TODO.md` 3.4. Both are TPM-era spare pins (see
 `TODO.md` §3.3); `PA2` and `PA14`, the other two spares, were checked
 exhaustively against every `PINCMx.PF` option and offer no I²C function at
 all, so `PA1`/`PA8` were not a guess among several candidates — they are the
@@ -114,20 +131,51 @@ sheet. `.kicad_pcb` routing is separate, still-open layout work — `TODO.md`
 
 ## 4. The constraint that governs how this part is used
 
-[45] p.28 §7.1–§7.2: the security monitor sets `t_max` to 5 seconds (± 5%) and
-permits **one protected operation per `t_max` period**. "Private key use" is a
-protected event.
+**Corrected 2026-08-23** on intake of the Solution Reference Manual [53], which
+specifies the mechanism the datasheet only summarises. The paragraph that stood
+here said the security monitor "permits **one protected operation per `t_max`
+period**", full stop. That is the *permitted sustained usage profile*
+([53] §4.6.2, p. 74), not an instantaneous gate, and reading it as a hard gate
+would rule out a boot sequence the part handles comfortably.
+
+What [53] §4.6 actually specifies:
+
+- `t_max` defaults to 5 seconds (± 5 %) and is configurable through data object
+  0xE0C9 ([53] §4.6.3, p. 75; byte layout at §5.6, p. 97, Table 77 — `t_max` is
+  encoded as milliseconds/100, default 50). **Setting it to 0 disables the
+  security monitor entirely**, which this design does not do and must not.
+- The throttle is credit-based. A security event consumes accumulated
+  SEC_CREDIT (default maximum 5) before it increments the Security Event
+  Counter, and SEC decrements once per event-free `t_max`.
+- **The delay only begins at SEC = 128** and reaches `t_max` at SEC = 255
+  ([53] §4.6.4, pp. 76–77, Figure 30). Below 128 there is no delay at all.
+- The counted events are enumerated at [53] §4.6.1, p. 74, Table 65: decryption
+  failure, key derivation on a *persistent* object, private key use, secret key
+  use, and suspect system behaviour. **Each key-use entry explicitly excludes
+  temporary keys held in a session context.**
 
 Consequences, which are firmware obligations, not layout ones:
 
 1. **Device authentication is a boot-time event.** One ECDSA signature with the
-   identity key per 5 s, worst case. Authenticating per frame or per command is
-   impossible by construction.
+   identity key costs one "Private key use" event. A handful of such events at
+   boot is well inside budget; what is not affordable is doing it continuously.
 2. **The Trust M must never sit in a control hot path.** A servo update loop
-   would exceed the budget by orders of magnitude and be throttled into
-   failure. Per-frame authentication belongs on the MCU's own AES/CMAC engine.
-3. **Session-context keys are exempt**, which is what makes an ECDHE handshake
-   practical — but the identity key use that bootstraps the session is not.
+   authenticating at tens of Hz to kHz would drive SEC to its ceiling and be
+   throttled into failure. Per-frame authentication belongs on the MCU's own
+   AES/CMAC engine — `TODO.md` 4.7.
+3. **Session-context keys are exempt**, per Table 65's own carve-outs, which is
+   what makes an ECDHE handshake practical — but the identity key use that
+   bootstraps the session is not.
+4. **Do not power-cycle `U7` to reset its state.** [53] §4.6.4, p. 77 advises
+   against removing VCC before SEC has returned to 0, and caps VCC off/on
+   cycling at **200 000 times over the part's lifetime**. This board has no VDD
+   switch anyway (see §2), and the firmware is configured for a warm reset
+   accordingly.
+
+The firmware acts on all of this: it reads OID 0xE0C5 (SEC) before spending
+budget and refuses rather than issuing an operation into a throttle. See
+[`../firmware/README.md`](../firmware/README.md), "On the security-monitor
+budget".
 
 Security-protocol decisions — anti-replay freshness, enabling the I²C
 Shielded Connection, the fail-behaviour on authentication failure
@@ -158,4 +206,7 @@ repo's own primary sources, not copied from it).
 
 ---
 
-*Authored by Claude Opus 5 (`claude-opus-5`) under human direction, 2026-08-10.*
+*Authored by Claude Opus 5 (`claude-opus-5`) under human direction, 2026-08-10;
+§3's IOMUX `PF` values and §4's security-monitor characterization corrected by
+Claude Opus 5 (`claude-opus-5`) under human direction, 2026-08-23, against
+[46] Table 6-2 and the newly intaken [53].*

@@ -1,18 +1,19 @@
 # Servo bus security protocol — design decisions (TODO.md §4.4–4.10)
 
-**Date:** 2026-08-22
-**Status:** design decisions recorded; **no firmware exists yet** — this feeds
-`TODO.md` 7.2 (Trust M driver layer) and 7.1 (full firmware rewrite). Nothing
-here is implemented; it is the record `AGENTS.md` §4 requires before it is.
+**Date:** 2026-08-22; §4.4 and §4.7 substantially revised 2026-08-23 on intake
+of the OPTIGA™ Trust M Solution Reference Manual [53].
+**Status:** §4.4, §4.5, §4.7 and §4.9 are decided **and implemented** in
+[`firmware/`](../firmware/) (`TODO.md` 7.2). §4.6's threshold and §4.8's
+daisy-chain question still wait on the control-loop and bus-protocol design of
+`TODO.md` 7.1, which does not exist yet.
 **Governing rules:** [`AGENTS.md`](../AGENTS.md). Every claim below traces to
 [`REFERENCES.md`](../REFERENCES.md) or is marked `UNVERIFIED`/`OPEN`/
 `JUDGMENT CALL` (the last per `AGENTS.md` §4: "if a decision is a judgment
 call with no governing standard, say so explicitly").
 
-This document does not re-derive [45]'s hard constraint that the Trust M
-permits only one protected operation per 5 s `t_max` — see
-[`OPTIGA-Trust-M-secure-element.md`](OPTIGA-Trust-M-secure-element.md) §4 for
-that. Everything below is downstream of it.
+The Trust M's security-monitor budget governs everything below. **Its
+characterization in this repository was corrected 2026-08-23** — see §4.7, and
+[`OPTIGA-Trust-M-secure-element.md`](OPTIGA-Trust-M-secure-element.md) §4.
 
 ---
 
@@ -55,16 +56,136 @@ pointless if the ECDHE session key it produces then crosses that same bus in
 clear on every subsequent transaction. This is `TODO.md` 4.4's own stated
 rationale and [45] gives no reason to disagree.
 
-**`UNVERIFIED — needs primary source (see TODO.md)`, tracked as new item
-1.4.f:** the *procedure* for provisioning the platform binding secret (how it
-is generated, how the same value is safely deposited into both `U7`'s
-platform-binding-secret slot and the MCU's KEYSTORE at manufacture, and what
-key-derivation function seeds the Shielded Connection session from it) is not
-in the datasheet — p. 10 explicitly defers to the **"Solution Reference
-Manual document available as part of the package,"** which is not present in
-`PCB/datasheets/` and was not reachable in this session. Do not implement
-firmware-side Shielded Connection pairing from memory of similar protocols;
-intake that document first.
+**RESOLVED 2026-08-23.** The Solution Reference Manual is now intaken as
+**[53]** (`PCB/datasheets/OPTIGA_Trust_M_Solution_Reference_Manual_v3.70.pdf`,
+fetched from Infineon's own GitHub organization — see `TODO.md` 1.4.f), and the
+provisioning procedure it defines is implemented in
+[`firmware/trust/ls_trust_pairing.c`](../firmware/trust/ls_trust_pairing.c).
+The paragraph that used to stand here said the procedure "is not in the
+datasheet ... Do not implement firmware-side Shielded Connection pairing from
+memory of similar protocols; intake that document first."  That instruction was
+followed; what follows is read from [53] and [56], not reconstructed.
+
+### 4.4.1 — Why pairing is mandatory, not a hardening option
+
+[56] §2, pp. 5–7, Table 1, row "0xE140 – Platform binding secret" records that
+on an **OPTIGA™ Trust M V3** part — the variant on this BOM, sales code
+SLS 32AIA010ML ([45] p. 8, Table 2) — the object ships as:
+
+| Field | As shipped (V3) |
+| --- | --- |
+| Life cycle state (LcsO) | Creation |
+| Value | **Default** |
+| Read AC | **ALW** |
+| Change AC | `LcsO < operational \|\| Conf(0xE140)` |
+
+A **default value with always-readable access is a published constant**. Until
+pairing has run, the Shielded Connection is keyed by something anyone can look
+up, and it protects nothing at all. This is the single most consequential fact
+the SRM intake produced: it converts 4.4 from "enable a feature" into "execute a
+manufacturing step, without which the part is decorative."
+
+(Express and MTR variants ship 0xE140 already Operational with a chip-unique
+value and read AC NEV — paired at Infineon, secret retrieved from CIRRENT™
+Cloud ID. This design does not use those variants.)
+
+### 4.4.2 — The procedure
+
+[53] §2.3.4, p. 20, Figure 12, "Pair OPTIGA™ Trust M with host (pre-shared
+secret based)". Pre-condition: 0xE140 is not locked, LcsO below operational.
+Post-condition: the secret is present on both sides and locked.
+
+1. Create `optiga_util` and `optiga_crypt` instances at
+   `OPTIGA_COMMS_NO_PROTECTION` with protocol version
+   `OPTIGA_COMMS_PROTOCOL_VERSION_PRE_SHARED_SECRET`. There is no secret yet, so
+   there is nothing to protect the channel with.
+2. Open the application.
+3. Read 0xE140's metadata and check LcsO. If it is already operational, stop —
+   the part was paired before, and whether that is benign depends entirely on
+   whether the host still holds the matching secret.
+4. Generate the secret with `optiga_crypt_random(OPTIGA_RNG_TYPE_TRNG, ...)`.
+   **64 bytes**, the maximum the host library allows: [53] §6.5.8, p. 107
+   recommends "32 bytes or more", and there is no reason to take the floor.
+   Drawn from the OPTIGA rather than the MCU because [45] p. 1 makes the OPTIGA
+   a Common Criteria EAL6+ (high) certified device and its RNG carries that
+   evaluation; the MSPM0's entropy source carries no equivalent certification
+   in [46].
+5. Write it to 0xE140 (`OPTIGA_UTIL_ERASE_AND_WRITE`).
+6. **Store it on the host, and confirm the store, *before* step 7.**
+7. Write 0xE140's final metadata: raise LcsO to operational and set read AC to
+   `LcsO < operational`, i.e. permanently unreadable.
+8. Close the application.
+
+**The step 6/7 ordering is this design's own, and it is not the ordering the
+upstream reference example uses.** Step 7 is irreversible — [53] §5.3, p. 96,
+Table 74 states the four life-cycle states "only progress in one direction from
+a lower value to a higher value." If the host store had failed after locking,
+the two parts would be unpaired with no way back and no diagnostic. Locking
+last means a host-store failure leaves 0xE140 still writable, so the line can
+retry or scrap cleanly.
+
+**The final life-cycle state is operational, also a divergence.** The upstream
+example ships with `FINAL_LCSO_STATE` set to *creation* and a comment that "at
+the real time/customer side this needs to be LCSO_STATE_OPERATIONAL". Leaving a
+shipped unit at creation would be unacceptable: the change AC permits
+`LcsO < operational`, so anything that can reach the I²C bus could rewrite the
+binding secret and re-pair the part to itself.
+
+The change AC keeps its `Conf(0xE140)` branch — [56] §2, p. 7 defines `Conf(X)`
+as "the action is only possible in case the data involved ... are
+confidentiality protected with key given by X. This enforces the shielded
+connection" — which is what leaves runtime secret rotation ([53] §2.3.6, p. 21,
+Figure 14) possible later. [53] §6.5.8 recommends that rotation; [53] §5.1's NVM
+budget (2 million tearing-safe programming cycles across all objects, and
+data retention declining toward ½ year beyond about 40 000 cycles of an object)
+is why it must be scheduled rather than done casually. Rotation is not
+implemented — `TODO.md` 4.14.
+
+### 4.4.3 — Where the host keeps the secret: a correction
+
+The paragraph below this section used to say the secret would be deposited
+"into both `U7`'s platform-binding-secret slot and the MCU's KEYSTORE at
+manufacture." **The KEYSTORE cannot hold it**, for two independent reasons read
+2026-08-23:
+
+1. [46] §8.21, p. 89 describes the Keystore controller's use model as depositing
+   keys "and have the AES engine access them subsequently in a secure manner
+   without leaking any key data to observers", holding "128 and 256-bit keys".
+   It is a write-then-use-by-AESADV store; software does not read key material
+   back out of it.
+2. The host library requires plaintext readback. [53] §6.6.1, p. 108 states that
+   during Shielded Connection establishment "the `optiga_comms_ifx_i2c` module
+   invokes `pal_os_datastore_read`", and the secret is up to 64 bytes — not an
+   AES key width.
+
+The secret must therefore live in MCU non-volatile memory that firmware can
+read, protected by the MSPM0's flash and debug protections rather than by a key
+store. Selecting that protection — static write protection, flash read-out
+protection, and the one-way NONMAIN debug lockdown of [49] §§2.6/3.2 — is
+`TODO.md` 4.13 and must be settled before any unit is provisioned.
+
+The KEYSTORE remains exactly the right home for the **derived per-session bus
+CMAC key** of §4.7: that *is* an AES key, it is used only by AESADV, and it is
+never read back. Two different secrets with two different lifetimes; conflating
+them was the original error.
+
+### 4.4.4 — The cost of this decision, which was not visible in [45]
+
+Defining `OPTIGA_COMMS_SHIELDED_CONNECTION` makes three **host-side**
+cryptographic primitives a link-time requirement:
+`pal_crypt_tls_prf_sha256`, `pal_crypt_encrypt_aes128_ccm` and
+`pal_crypt_decrypt_aes128_ccm`. The presentation layer of the IFX I²C protocol
+[54] protects each APDU with AES-128-CCM under a key derived from the platform
+binding secret with the TLS 1.2 PRF, and that work happens on the MCU.
+
+This is a real cost of enabling the Shielded Connection and it appears nowhere
+in [45]. It is implemented in
+[`firmware/pal/ls_pal_crypt.c`](../firmware/pal/ls_pal_crypt.c) from [58]
+RFC 5246 §5 and [59] NIST SP 800-38C §§6.1–6.2 and Appendix A, and verified
+against independent implementations — see
+[`firmware/tests/README.md`](../firmware/tests/README.md). The AES block cipher
+and HMAC-SHA256 beneath it are deliberately not implemented in this project;
+`TODO.md` 7.6 tracks binding them to a vetted source.
 
 **Provisioning-flow interaction:** per [49] (SLAAE29A) §2.6/§3.2, MCU-side
 NONMAIN lockdown is a one-way, per-unit decision. The platform binding secret
@@ -177,12 +298,39 @@ current MCU) and must not be guessed at here.
 This is close to fully settled by 1.4.a/[46] and [45], not really a judgment
 call:
 
-- [45] p.28 §7.1–§7.2 (already the basis for `OPTIGA-Trust-M-secure-element.md`
-  §4): one protected operation per 5 s `t_max`, hard security-monitor limit.
-  A servo control loop authenticating every frame at any realistic frame
-  rate (tens of Hz to kHz) exceeds this by orders of magnitude — this alone
-  rules the Trust M out for per-frame work, independent of the 4.4 latency
-  numbers above.
+- **Corrected and strengthened 2026-08-23 from [53] §4.6, which the datasheet
+  only summarises.** This document previously wrote the constraint as "one
+  protected operation per 5 s `t_max`, hard security-monitor limit." That
+  overstates it, and the correction matters because the overstatement would rule
+  out things this design actually needs to do:
+
+  - [53] §4.6.2, p. 74 defines *one protected operation per `t_max`* as the
+    **permitted sustained usage profile**, not an instantaneous gate.
+  - [53] §4.6.4, pp. 76–77 gives the enforcement: a delay "starts as soon as SEC
+    reaches the value of 128" and grows to `t_max` only at SEC = 255. Below
+    SEC = 128 there is **no delay at all**.
+  - The SEC/SEC_CREDIT mechanism of [53] §4.6.2 lets credit accumulate while the
+    part is idle (SEC_CREDIT_MAX default 5), and an event consumes credit before
+    it ever increments SEC.
+  - **[53] §4.6.1, p. 74, Table 65 is the load-bearing detail**: each of the
+    "Private key use", "Secret key use" and "Key derivation" events carries an
+    explicit carve-out for *temporary keys held in a session context*. Work done
+    against a session context spends no budget.
+
+  So a short burst of protected operations at boot is entirely normal.
+  **The conclusion of this section is unchanged and better supported**: a
+  control loop authenticating every frame at tens of Hz to kHz would drive SEC
+  to its ceiling and be throttled into failure, so the Trust M cannot sit in the
+  per-frame path. What changes is that the boot-time trust sequence — one
+  identity signature plus one ephemeral key generation, two security events
+  total, everything after that on a session context — is comfortably affordable,
+  which the old framing implied it was not.
+
+  Implemented accordingly: [`firmware/trust/ls_trust.c`](../firmware/trust/ls_trust.c)
+  reads OID 0xE0C5 (SEC) before spending budget and reports
+  `LS_TRUST_ERR_THROTTLED` rather than issuing an operation into a throttle;
+  [`firmware/trust/ls_trust_oid.h`](../firmware/trust/ls_trust_oid.h) carries the
+  thresholds with their citations.
 - [46] (SLASFA6B) p. 88 §8.18 and p. 89 §8.20 "AESADV" — confirms the MCU
   (`M0G3518QRHBRQ1`) has its own on-die AES-128/256 engine with CBC-MAC/CMAC/
   GCM/GMAC modes, independent of the Trust M, matching the README.md claim
@@ -284,10 +432,16 @@ class; recorded so it is not rediscovered").
 
 ## New follow-up items opened by this pass
 
-- **1.4.f** (`REFERENCES.md`/`TODO.md`) — intake the OPTIGA™ Trust M
-  *Solution Reference Manual* (referenced by [45] p.10 as shipped "as part of
-  the package," not currently in `PCB/datasheets/`) before implementing 4.4's
-  Shielded Connection pairing procedure.
+- ~~**1.4.f** — intake the OPTIGA™ Trust M *Solution Reference Manual*~~
+  **CLOSED 2026-08-23.** Intaken as [53], along with [54]–[56]; see
+  `TODO.md` 1.4.f and §4.4 above.
+- **4.13** — decide and configure where the MCU stores the platform binding
+  secret (§4.4.3). Blocks provisioning of any unit, because MCU-side NONMAIN
+  lockdown is a one-way per-unit door ([49] §§2.6/3.2).
+- **4.14** — implement runtime platform-binding-secret rotation ([53] §2.3.6,
+  Figure 14), which §4.4.2's access-condition choice deliberately leaves open.
+- **7.6** — bind `firmware/pal/ls_crypto_backend.h` to a vetted AES and
+  HMAC-SHA256 implementation (§4.4.4).
 - Bus noise-coupling risk flagged in 4.6 (shared `Vmot`/`GND` on the
   daisy-chain connector) is already tracked in
   `PCB/MSPM0G3518-MCU-swap.md` §6.4 — cross-referenced here, not duplicated
@@ -297,7 +451,9 @@ class; recorded so it is not rediscovered").
 
 *Written by Claude Sonnet 5 (`claude-sonnet-5`) under human direction,
 2026-08-22, from the local Trust M ([45]) and MSPM0G351x-Q1 ([46], [49])
-datasheets. Every citation above was read from the local PDF copies in this
+datasheets; §4.4 and §4.7 revised and the follow-up list updated by Claude
+Opus 5 (`claude-opus-5`) under human direction, 2026-08-23, from the newly
+intaken [53]–[57]. Every citation above was read from the local PDF copies in this
 session; nothing here is reproduced from model memory. Items marked
 `JUDGMENT CALL` are explicitly not derived from a cited standard, per
 `AGENTS.md` §4.*
