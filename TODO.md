@@ -303,14 +303,113 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
 
 ## 6. Schematic Hygiene
 
-- [ ] 6.1 Annotate the sheet. The netlist export still warns
-      "schematic has annotation errors."
-- [ ] 6.2 Work down the ERC backlog: 65 violations / 23 errors as of
-      2026-08-10 (improved from 67 / 25 by this pass). Dominated by
-      `endpoint_off_grid` (25) and `power_pin_not_driven` (17), both inherited
-      from the EAGLE import.
-- [ ] 6.3 Resolve the EAGLE-import artifacts generally — `similar_label_and_power`,
-      `multiple_net_names`, and `label_multiple_wires` all stem from it.
+- [x] 6.1 **Annotate the sheet** (2026-09-08/09). The 9 orphaned `U$N`
+      EAGLE-import placeholders (`U$1`/`U$2` SLOT→`J1`/`J2`, `U$3`/`U$4`
+      FFC-5→`J4`/`J3`, `U$5` HEADER→`J5`, `U$6` POTEN_SERVO→`RV1`,
+      `U$8`/`U$9` JST_PH-4→`J6`/`J7`, `U$100` OSCILATOR→`Y1`) all now carry
+      real reference designators. Verified via `analyze_schematic.py`: 117
+      components, 0 duplicates, 0 remaining `U$`-form refs.
+- [~] 6.2 **ERC backlog: 64 violations / 19 errors (2026-08-10 baseline)
+      → 56 violations / 6 errors (2026-09-08/09)**, verified throughout via
+      `kicad-cli sch erc --severity-all` and `kicad-cli sch export netlist`
+      (the authoritative ground truth — see the note on
+      `analyze_schematic.py`'s net dict below). Two **real, previously-
+      undetected wiring defects** were found and fixed in this pass, not
+      just hygiene:
+  - **`U5` (ADM2587E) RS-485 differential-pair short.** `Y`/`Z`/`A`/`B`
+        were all one electrical node (a stray wire bridged the
+        `RS485_P`-labeled bus to the `RS485_N`-labeled wire). Split
+        correctly into `Y`+`A`→`/RS485_P`, `Z`+`B`→`/RS485_N`, matching
+        `PCB/RS485-CANFD-TPM-upgrade.md` §2's documented intent. As drawn
+        before this fix, the RS-485 bus could not have worked.
+  - **`U6` (ADM3055E) CAN-FD bus short.** `GND1`/`VCC`/`VIO`/`RXD`/`TXD`
+        were all bussed onto one wire trunk reaching a `+3V3` symbol —
+        shorting logic ground, the isolated 5 V input, the 3.3 V IO
+        supply, and both CAN-FD signal pins together. Separated onto
+        `GND`/(undriven, see below)/`+3V3`/`/CAN0_RX`/`/CAN0_TX`
+        respectively; confirmed `RXD`/`TXD` were already correctly wired
+        to `U1` pins 17/16.
+  - Also found and fixed: two power-symbol instances (`#P+5`, `#P+6`)
+        used the `+5V` symbol type (which asserts membership in a global
+        `+5V` net via the symbol's own pin name) while their **Value**
+        property had been hand-edited to display `Vmot` — changing the
+        Value text does **not** change a KiCad power symbol's underlying
+        net tie, so these were silently on a nonexistent `+5V` net
+        instead of the real `VMOT` rail. Replaced both with plain local
+        `VMOT` labels, unifying `VMOT` as one real net (`M4`/`M5`
+        FAN3227 gate-driver `VDD`, `U4` ACS711 `P$3`).
+  - Added `power:PWR_FLAG` on 15 nets that ERC correctly reports as
+        undriven because nothing in the schematic supplies them from a
+        pin ERC recognizes as `power_out`, but which **are** genuinely
+        supplied: `U5`/`U6`'s isolated-side `GNDISO`/`GND2`/`VISOIN`/
+        `VISOOUT` (isoPower-converter-generated, not modeled as a driving
+        pin on either symbol), board `+7V`/`GND`/`VMOT` (external from the
+        battery/motor connector), `U1` `VCORE` (MCU-internal core rail,
+        decoupling-only per TI's usual guidance), `U2`'s true power input
+        (routed through `M1`, a P-FET reverse-polarity protection stage
+        whose drain-current path ERC's simple pin-type model can't
+        recognize as "driving"), and `U3`'s LDO input (fed from `U2`'s
+        regulated output, which the EAGLE-imported symbol types generic
+        `output` rather than `power_out`).
+  - Tied `U2`'s `AGND` pin (previously a genuinely isolated 2-pin island:
+        only reaching feedback resistor `R1`, never board `GND`) to the
+        main `GND` net. The MPM3610 datasheet's likely-preferred treatment
+        — a dedicated low-noise star-ground point for the feedback
+        divider, separate from switching `PGND` — is a **PCB-copper**
+        concern to verify at layout time (§5.3/§7 routing), not a
+        schematic-connectivity one; the datasheet isn't in
+        `PCB/datasheets/` to confirm further (see new item 1.4.g below).
+  - **Cannot fix, wiring-verified correct — documented waiver, not an ERC
+        exclusion** (kicad-cli 9.0.2 doesn't expose a safe scripted path to
+        write `.kicad_pro`'s `erc_exclusions` array without risking file
+        corruption; do this from the GUI at the next KiCad session instead):
+    - `#+3V1` (`power_pin_not_driven`, 1 error): this `+3V3` power-symbol
+          instance's local wire network was traced (via
+          `kicad-cli sch export netlist`, cross-checked against raw wire/
+          pin geometry) all the way to `C9`'s pin 1, which the netlist
+          confirms is on the real, `U3`-driven `+3V3` net. kicad-cli's ERC
+          appears to evaluate `power_pin_not_driven` per pre-merge local
+          subgraph rather than crediting the post-merge named net for this
+          specific instance — a verified false positive, not a defect.
+    - `U2` `P$4`/`P$5`/`P$6` (`SW`, `pin_not_connected`, 1 error): the
+          MPM3610 (`MPM36XX` symbol) is a Monolithic-Power-style integrated
+          power module (inductor-in-package); its `SW` node may be
+          correctly left unconnected on this class of part, but the
+          MPM3610 datasheet isn't in `PCB/datasheets/` to confirm — see new
+          item 1.4.g.
+    - `U6` `VCC` (`pin_not_connected` + `power_pin_not_driven`, 2 errors):
+          **deliberately undriven**, per `PCB/RS485-CANFD-TPM-upgrade.md`
+          §3's own recorded, accepted open item — "wired to a new
+          `+5V_ISO_CANFD` net that nothing currently drives ... deliberately
+          left as an open BOM/regulator-selection decision." Not this
+          pass's decision to make.
+    - `J1`/`J2` `P$2` (SERVO_SLOT connectors, `pin_not_connected`, 2
+          errors): `P$1` on each correctly reaches the corresponding motor
+          half-bridge output (`M2`/`M3`); `P$2`'s purpose (a second,
+          possibly-redundant pad for the same physical motor-brush
+          contact, or something else) needs physical verification against
+          the SERVO_SLOT footprint/mechanical drawing — no datasheet exists
+          for this custom part. New item, see 1.4.g.
+  - **Still open, mechanical/cosmetic, not attempted this pass**:
+        `endpoint_off_grid` (28), `unconnected_wire_endpoint` (11),
+        `label_multiple_wires` (3), `no_connect_connected` (1) — these are
+        exactly the kind of bulk grid-snap/dangling-endpoint cleanup
+        KiCad's own GUI "Cleanup Schematic" / manual review handles far
+        more safely than further hand S-expression editing (this pass hit
+        two near-misses doing exactly that: an insertion at the wrong
+        `lib_symbols` boundary, and a wire deletion that turned out to
+        still be load-bearing — both caught by immediate
+        `kicad-cli sch export netlist` re-verification and reverted before
+        committing). Do this pass in the KiCad 9 GUI.
+- [~] 6.3 EAGLE-import artifact classes: `similar_label_and_power` (4→0)
+      and `multiple_net_names` (3→0, then a 4th appeared and was resolved
+      transiently during 6.2's VMOT fix) are now clear. `label_multiple_wires`
+      (3) remains, folded into 6.2's "still open, mechanical" list above.
+- [ ] 1.4.g **(new)** Intake datasheets for the MPM3610-class part behind
+      the `MPM36XX` symbol (AGND star-ground and `SW`-pin treatment) and
+      for the SERVO_SLOT connector footprint's mechanical drawing (`J1`/
+      `J2` `P$2` purpose). Both block closing 6.2's last two error
+      categories with a real fix rather than a waiver.
 
 ## 7. Firmware
 
