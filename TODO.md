@@ -241,7 +241,7 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
       taken in the 2026-08-23 pass — no current design claim depends on a
       release-note item. Fetch it before relying on any firmware-revision-
       specific behaviour of `U7`.
-- [ ] 4.13 **(High, blocks provisioning)** Decide and configure **where the MCU
+- [~] 4.13 **(High, blocks provisioning)** Decide and configure **where the MCU
       stores the platform binding secret**, and the flash/debug protection
       around it. Opened by a correction: `servo-bus-security-protocol.md`
       §4.4 had proposed the MCU **KEYSTORE**, and it cannot serve —
@@ -256,6 +256,76 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
       remains correct for the *derived session CMAC key* of 4.7. Interface is
       already carved out at
       [`firmware/pal/ls_secure_store.h`](firmware/pal/ls_secure_store.h).
+      **Design decision reached, mechanism confirmed against [52] (2026-09-12
+      — advances but does not close this item; see the flagged gap below):**
+        - **Storage location: the DATA flash bank's Data Bank Protection
+          region**, [49] §4.4 / [52] §4.4.5 p. 470: "A region of flash DATA
+          bank can be configured for read-write protection... Only the first
+          4KB of the DATA bank can be protected at a sector (1KB)
+          granularity. Each sector can be: Read protected / Write protected /
+          Both / Neither." Configuring the secret's sector as **write
+          protected only** (not read protected) is what keeps it in "readable
+          MCU NVM" per this item's own requirement, while still statically
+          protecting it from modification — register `SYSCTL.SECCFG.FRWPROTDATA`
+          per [52] p. 470 (bit-level offset not yet available locally, see
+          gap below). [46] p. 84 §8.9 confirms this device has the 16 kB data
+          flash bank the mechanism requires.
+        - **Debug lockdown: SWD Security Level 1**, [52] §1.4.2.1 pp. 22–25,
+          Table 1-4 — application debug access **disabled** (or password-
+          gated), factory reset and TI failure-analysis access left enabled
+          with a unique password so a bricked-but-legitimate unit is still
+          recoverable, matching the TRM's own guidance (p. 24, "Level 1 is
+          the recommended configuration for most standard production
+          use-cases"). **Level 2 (fully restricted) is explicitly NOT
+          recommended here**: [52] p. 25 warns it forecloses TI failure
+          analysis and any future re-programming with no recovery path,
+          which is a harsher trade than this design's threat model needs.
+        - **NONMAIN itself must also be statically write-protected**
+          (`BOOTCFG4.NONMAINSWP`, [52] §1.4.2.3.2 pp. 26–27) once the SWD and
+          write-protection policy above are set, or an attacker with SWD
+          access could simply reprogram the security policy back to
+          unrestricted. [52] p. 27's own note confirms this combination is
+          exactly the one-way door this TODO item's original wording
+          anticipated: "the NONMAIN is equivalent to immutable read-only
+          memory, and it is no longer possible to change the device
+          configuration by any means."
+      **Real gap found, flagged rather than papered over:** [52] Table 1-6
+      p. 30 states the **MSPM0G351x family uses NONMAIN layout Type F**
+      specifically — not Type A or Type E. This local copy of [52] includes
+      full register-level appendices for **NONMAIN_TYPEA** (§1.4.5, p. 31)
+      and **NONMAIN_TYPEE** (§1.4.6, p. 60) but **no NONMAIN_TYPEF
+      appendix** — confirmed by a full-text search of the local PDF for both
+      "NONMAIN_TYPEF" and "TYPEF" (the only "Type F" hit in the whole
+      document is the unrelated §1.5.4 FACTORYREGION_TYPEF, p. 141).
+      Likewise, [52] §4.4 (pp. 465–471, the runtime-security chapter that
+      names `SYSCTL.SECCFG.FRWPROTDATA`, `FLBANKSWP`, `SECSTATUS.INITDONE`
+      etc.) gives field names and one key value (`0x9D` for the INITDONE
+      lock, p. 467) from CSC pseudocode, but **no register offset/bit-map
+      table for any `SYSCTL.SECCFG.*` register** — confirmed by searching
+      every page containing "SECCFG" in the local copy. **Concretely: the
+      exact `BOOTCFG2/3/4`, `FLASHSWP0/1`, and SWD-policy pattern-match field
+      positions for *this* device's Type F NONMAIN layout, and the register
+      offsets for `SYSCTL.SECCFG.*`, are UNVERIFIED for MSPM0G351x-Q1** and
+      must not be guessed by reusing Type E's layout (per `AGENTS.md` §1.3 —
+      the TRM covers multiple device families with device-specific
+      differences precisely in this area). **Recommended path, per [52]
+      p. 30 itself: use the MSPM0-SDK's NONMAIN configurator tool ("The
+      MSPM0-SDK includes a configurator tool to help the user configure
+      NONMAIN contents") for the actual per-unit provisioning step**, rather
+      than hand-written register pokes against an unverified field layout —
+      and/or locate the Type F register appendix (a newer TRM revision, or a
+      device-specific configuration reference, is not yet in
+      `PCB/datasheets/`).
+      **What this leaves for TODO.md 7.6/7.1 implementation, once the gap
+      above is closed:** the flash **controller** command sequences
+      (PROGRAM/ERASE/READVERIFY) that would read and write the secret's DATA
+      bank sector at runtime are device-generic, documented at [52] §6.3
+      pp. 548–557, and do NOT depend on the NONMAIN Type A/E/F distinction —
+      only the one-time *provisioning policy* (write-protecting the sector
+      and locking NONMAIN) does. `ls_secure_store.c` — the implementation
+      file this interface still lacks — can therefore be written against
+      §6.3 now; only the manufacturing-time NONMAIN/SECCFG provisioning step
+      must wait on the gap above.
 - [ ] 4.14 **(Medium)** Implement runtime platform-binding-secret rotation
       ([53] §2.3.6 p. 21 Figure 14), which 4.4's access-condition choice
       deliberately keeps possible (the change AC retains its `Conf(0xE140)`
@@ -349,14 +419,34 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
         application-supplied contracts unresolved (7.3, 4.13, 7.6) — no
         accidental gaps.
       Follow-ups split out below rather than left implicit: 7.3, 7.4, 7.5, 7.6.
-- [ ] 7.3 **(Blocks bring-up)** Design the MCU clock tree and correct
-      `LS_I2C_FUNCTIONAL_CLK_HZ` in
-      [`firmware/pal/ls_board.h`](firmware/pal/ls_board.h). It currently holds
-      32 MHz, marked `UNVERIFIED — needs primary source`, chosen only because
-      that is the value [52] §25.2.1 works its own TPR example with, so the
-      derived divisor is checkable against the document. `pal_i2c_init()`
-      recomputes TPR from this constant — correct the constant, never
-      hand-patch the TPR.
+- [x] 7.3 **(Blocks bring-up)** Verify `LS_I2C_FUNCTIONAL_CLK_HZ` in
+      [`firmware/pal/ls_board.h`](firmware/pal/ls_board.h) (2026-09-12).
+      **Result: 32 MHz, the value already in use, is confirmed correct** — but
+      not for the reason previously given. Citation chain: [52] p. 224
+      "In all BOOTRST scenarios, MCLK will be sourced from SYSOSC at BASE
+      frequency"; [46] p. 58 §7.9.1 SYSOSC BASE (`SYSOSCCFG.FREQ`=00) = 32 MHz;
+      [46] p. 74 Fig. 8-1 / p. 76 Table 8-1, I2C0 is a **PD0** peripheral;
+      [52] p. 1285 §25.2.1.1, a PD0 instance's `BUSCLK` is **ULPCLK**, not
+      MCLK directly; [52] p. 216 §2.3.2.3, ULPCLK equals MCLK with no divider
+      whenever MCLK is SYSOSC-sourced (the reset default, and this firmware
+      tree reconfigures no clock tree — see 7.1's scope note). So
+      ULPCLK = MCLK = SYSOSC = 32 MHz here, and the constant stands.
+      **A real bug found in the same pass:** [52] p. 1317 §25.3.6 Table 25-28,
+      `I2Cx.CLKSEL` resets to `0x0` — **neither** `BUSCLK_SEL` nor `MFCLK_SEL`
+      is set out of reset, so I2C0 had **no** functional clock source selected
+      at all; the removed code comment's claim that "reset values" meant
+      BUSCLK was incorrect. `pal_i2c_init()` in
+      [`firmware/pal/ls_pal_i2c.c`](firmware/pal/ls_pal_i2c.c) now writes
+      `CLKSEL.BUSCLK_SEL` explicitly; new bit macros in
+      [`firmware/pal/mspm0/ls_mspm0_i2c_regs.h`](firmware/pal/mspm0/ls_mspm0_i2c_regs.h).
+      `CLKDIV`'s reset value (divide-by-1, [52] §25.3.5) was already being
+      relied on correctly and is unchanged.
+      **Scope note:** this closes the item as it applies to `firmware/`'s one
+      peripheral (I2C0 for the secure element). It is not a general MCU
+      clock-tree design for the servo control loop — that firmware does not
+      exist yet (7.1) and will need its own clock-tree decision (e.g. whether
+      MCLK needs to run faster than 32 MHz SYSOSC for PWM/ADC timing) when it
+      is written.
 - [ ] 7.4 **(Low)** Convert `firmware/pal/ls_pal_i2c.c` from blocking transfers
       to interrupt-driven ones. The PAL contract permits blocking and it is the
       right first implementation — 4.7 keeps `U7` out of the control hot path,

@@ -144,6 +144,18 @@ Section/page, as applied in this repository:
   both on the same I²C instance (`I2C0`). Wired into
   `PCB/kicad/LibreServo-v4.0.0.kicad_sch` (`U1` pins 2 and 12) 2026-08-22 — see
   `TODO.md` 3.1/3.3/4.3 and `PCB/MSPM0G3518-MCU-swap.md` §3.
+- p. 58, §7.9.1 "System Oscillator (SYSOSC)", Table — factory-trimmed SYSOSC
+  frequency: `SYSOSCCFG.FREQ`=00 (BASE) = 32 MHz, =01 = 4 MHz; user-trimmed 24 MHz
+  and 16 MHz options also listed. Basis for the SYSOSC BASE-frequency figure used
+  in `TODO.md` 7.3.
+- p. 74, §8.1, Figure 8-1 "MSPM0G351x-Q1 Functional Block Diagram" — `I2C0`,
+  `I2C1`, `I2C2` are drawn under "PD0 PERIPHERAL BUS (ULPCLK)".
+- p. 76, Table 8-1 "Supported Functionality by Operating Mode" — `I2C0/1/2` listed
+  under "PD0 Peripherals". Confirms I2C0 (this design's secure-element bus) is a
+  PD0 instance, so its `BUSCLK` (per [52] §25.2.1.1) is `ULPCLK`, not `MCLK`
+  directly. Basis, with the SYSOSC figure above and [52]'s MCLK/ULPCLK-tree
+  citations, for the verified `LS_I2C_FUNCTIONAL_CLK_HZ` value in
+  `firmware/pal/ls_board.h` — closes `TODO.md` 7.3.
 - p. 84, §8.9 "Flash Memory" — dual-bank flash (up to 256 kB/512 kB total) with a
   separate 16 kB data flash bank and bank-address swap for OTA updates.
 - p. 88, §8.18 "Security" — debug security, device identity, AES-128/256 (GCM/GMAC,
@@ -160,8 +172,10 @@ Section/page, as applied in this repository:
 
 Cited in: `README.md`; `PCB/MSPM0G3518-MCU-swap.md`; `PCB/ReadMe.md`;
 `PCB/kicad/LibreServo-v4.0.0.kicad_sch` (`U1`, symbol description);
-`PCB/kicad/LibreServo-v4.0.0-eagle-import.kicad_sym`; `TODO.md`.
-Date accessed: 2026-08-22.
+`PCB/kicad/LibreServo-v4.0.0-eagle-import.kicad_sym`; `firmware/pal/ls_board.h`;
+`TODO.md`.
+Date accessed: 2026-08-22 (identity, pins 6.2, security 8.18, unused-pin 6.4);
+2026-09-12 (SYSOSC 7.9.1, PD0 assignment 8.1/Table 8-1, added for `TODO.md` 7.3).
 
 **[47]** Analog Devices, Inc., *ADM2582E/ADM2587E: Signal and Power Isolated RS-485
 Transceiver With ±15 kV ESD Protection*, Rev. H, Analog Devices, Inc., Wilmington, MA,
@@ -312,10 +326,87 @@ Section/page, as applied in this repository:
   Equation-27 derivation above produces.
 - **§25.3.38, p. 1355, Table 25-60** `CCR` — `CLKSTRETCH` bit 2, `MCTL`
   (multi-controller) bit 1, `ACTIVE` bit 0.
+- **§2.3.2.1, p. 213, Table 2-7** "MCLK Source Selection in RUN and SLEEP Mode" and
+  **p. 224 note** (§2.3.4 area) — "In all BOOTRST scenarios, MCLK will be sourced
+  from SYSOSC at BASE frequency." The reset-default MCLK source and rate.
+- **§2.3.2.3, p. 216** "ULPCLK (Low-Power Clock)" — "When MCLK is configured to
+  run from SYSOSC or LFCLK, SYSCTL disables UDIV automatically and fULPCLK=fMCLK
+  as these clock sources are always <=32MHz." Establishes ULPCLK = MCLK with no
+  divider whenever MCLK is SYSOSC-sourced, as it is at reset and as this firmware
+  leaves it (no clock-tree reconfiguration exists — `TODO.md` 7.1).
+- **§25.2.1.1, p. 1285** "Clock Select and I2C Speed" — "Use I2Cx.CLKSEL register
+  to select the source of the I2C functional clock... BUSSCLK: the current bus
+  clock is selected as the source for I2C. The current bus clock depends on power
+  domain. If the I2C instance is in power domain 1 (PD1) refer to MCLK, if the
+  I2C instance is in power domain 0 (PD0) refer to ULPCLK." Combined with [46]
+  p. 74/76 (I2C0 is PD0), this is the chain that verifies
+  `LS_I2C_FUNCTIONAL_CLK_HZ` = 32 MHz in `firmware/pal/ls_board.h` — closes
+  `TODO.md` 7.3.
+- **§25.3.6, p. 1317, Table 25-28** `CLKSEL` **[Reset = 00000000h]** — bit 3
+  `BUSCLK_SEL`, bit 2 `MFCLK_SEL`, both reset to 0. **Finding:** neither bit is
+  set out of reset, so the I2C module selects **no** functional clock source
+  until software writes one — the prior assumption in `ls_pal_i2c.c` that
+  "reset values" meant BUSCLK was wrong. `pal_i2c_init()` now writes
+  `CLKSEL.BUSCLK_SEL` explicitly (2026-09-12 fix, part of closing `TODO.md` 7.3).
+- **§25.3.5, p. 1316, Table 25-27** `CLKDIV` **[Reset = 00000000h]** — `RATIO`
+  bits 2-0, 0h = divide by 1. Confirms the driver's existing assumption that
+  leaving `CLKDIV` at its reset value gives an undivided functional clock is
+  correct (unlike `CLKSEL`, above).
+- **§1.4.1, p. 20** "Configuration Memory (NONMAIN)" — NONMAIN is a dedicated
+  flash region holding BCR/BSL boot configuration; not affected by a mass
+  erase, but erased/reset to factory defaults by a factory-reset command.
+- **§1.4.2.1, pp. 22–25, Table 1-4 and §§1.4.2.1.1–1.4.2.1.3** "Serial Wire
+  Debug Related Policies" — the three generic SWD security levels (0 = no
+  restrictions, 1 = custom per-function restrictions, 2 = SW-DP fully
+  disabled) and their recommended use; p. 24 explicitly recommends Level 1
+  "for most standard production use-cases"; p. 25 warns Level 2 forecloses
+  both TI failure analysis and any future SWD access with no recovery path.
+- **§1.4.2.3.1–§1.4.2.3.3, pp. 26–27** "Flash Memory Protection and Integrity
+  Related Policies" — static write protection of MAIN flash sectors
+  (`FLASHSWP0`/`FLASHSWP1` fields) and of the NONMAIN region itself
+  (`BOOTCFG4.NONMAINSWP`); p. 27's note: once NONMAIN is statically protected
+  and the factory-reset/TI-FA SWD commands are disabled, "the NONMAIN is
+  equivalent to immutable read-only memory, and it is no longer possible to
+  change the device configuration by any means" — the one-way-door property
+  `TODO.md` 4.13 is built around.
+- **§1.4.4, p. 30, Table 1-6** "NONMAIN Layout Types" — **MSPM0G351x devices
+  use NONMAIN layout Type F** specifically (distinct from Type A and Type E).
+  Also notes "The MSPM0-SDK includes a configurator tool to help the user
+  configure NONMAIN contents."
+- **§1.4.5, p. 31 "NONMAIN_TYPEA Registers" and §1.4.6, p. 60 "NONMAIN_TYPEE
+  Registers"** — full register-level appendices are present locally for
+  Types A and E **but not for Type F**, confirmed by an exhaustive text
+  search of this local copy (the only "Type F" match anywhere in the
+  document is the unrelated §1.5.4 FACTORYREGION_TYPEF, p. 141). **This is a
+  real, flagged gap**, not a claim resolved by this document: the exact
+  Type F field layout for MSPM0G351x-Q1 is UNVERIFIED here — see `TODO.md`
+  4.13.
+- **§4.1.1–§4.2.1, pp. 465–467** "Secure Boot" / "Customer Secure Code (CSC)"
+  — the CSC boot flow (`SYSCTL.SECCFG.SECSTATUS.INITDONE`, set with
+  `1 | (0x9D << 24)` per the pseudocode on p. 467) and the security
+  configuration actions CSC performs (keystore provisioning, bank-swap and
+  SRAM-boundary setup, flash firewall provisioning) before locking itself out
+  via `INITDONE`.
+- **§4.4.5, p. 470** "Data Bank Protection" — `SYSCTL.SECCFG.FRWPROTDATA`
+  configures the first 4 kB of the DATA flash bank at 1 kB sector
+  granularity, independently as read-protected, write-protected, both, or
+  neither; CPU/DMA/debugger accesses are all treated the same way. **No
+  register offset or bit-field table for any `SYSCTL.SECCFG.*` register is
+  present in this local copy** (confirmed by checking every page containing
+  "SECCFG") — the field name is verified, its address/bit-position is not;
+  see `TODO.md` 4.13.
+- **§6.3, pp. 548–557** "Flash Controller" — the PROGRAM, ERASE, READVERIFY
+  and BLANKVERIFY command sequences. Device-generic (not Type A/E/F
+  dependent), unlike the NONMAIN/SECCFG provisioning-policy fields above; the
+  basis for the flash read/write implementation still owed by
+  `firmware/pal/ls_secure_store.c` per `TODO.md` 4.13.
 Local copy: `PCB/datasheets/slau846e.pdf`.
 Cited in: `firmware/pal/mspm0/ls_mspm0_i2c_regs.h`; `firmware/pal/ls_pal_i2c.c`;
-`firmware/README.md`.
-Date accessed: 2026-08-23 (sections above); 2026-08-22 (identity).
+`firmware/pal/ls_board.h`; `firmware/README.md`; `TODO.md` 4.13, 7.3.
+Date accessed: 2026-08-23 (sections through §25.3.38); 2026-08-22 (identity);
+2026-09-12 (MCLK/ULPCLK tree §§2.3.2.1/2.3.2.3, CLKSEL/CLKDIV §§25.3.5/25.3.6
+for `TODO.md` 7.3; NONMAIN/BCR §§1.4.1–1.4.6, SECURITY §§4.1–4.4.5, Flash
+Controller §6.3, for `TODO.md` 4.13).
 
 **[53]** Infineon Technologies AG, *OPTIGA™ Trust M — Solution Reference Manual*,
 Rev. 3.70, Infineon Technologies AG, Munich, Germany, 2024-10-09. [Online].

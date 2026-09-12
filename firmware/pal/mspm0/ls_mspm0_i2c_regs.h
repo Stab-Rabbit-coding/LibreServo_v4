@@ -93,6 +93,33 @@ extern "C" {
 #define LS_I2C_RSTCTL_RESETSTKYCLR  (1UL << 1)
 
 /* ------------------------------------------------------------------------
+ * CLKSEL — I2C functional clock source select —
+ * [52] section 25.3.6, p. 1317, Table 25-28. [Reset = 00000000h]
+ *
+ * Both bits below are 0 at reset, i.e. **neither** BUSCLK nor MFCLK is
+ * selected as the functional clock source out of reset — the I2C module gets
+ * no functional clock at all until software picks one. This must be written
+ * explicitly during init; see TODO.md 7.3.
+ * ------------------------------------------------------------------------ */
+
+/** Bit 3: select BUSCLK (the current bus clock — MCLK on a PD1 instance,
+ *  ULPCLK on a PD0 instance; I2C0 is PD0 per [46] p. 74 Fig. 8-1 / p. 76
+ *  Table 8-1, so this selects ULPCLK here) as the I2C functional clock. */
+#define LS_I2C_CLKSEL_BUSCLK_SEL    (1UL << 3)
+/** Bit 2: select the fixed 4 MHz MFCLK as the I2C functional clock instead. */
+#define LS_I2C_CLKSEL_MFCLK_SEL     (1UL << 2)
+
+/* ------------------------------------------------------------------------
+ * CLKDIV — I2C functional clock divider —
+ * [52] section 25.3.5, p. 1316, Table 25-27. [Reset = 00000000h]
+ *
+ * RATIO field, bits 2-0: 0h = divide by 1 (the reset value, and the value
+ * this driver relies on — see ls_pal_i2c.c). Left undivided here; no macro
+ * beyond the offset is needed while the driver only ever uses the reset
+ * value.
+ * ------------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------------
  * CSA — controller target address — [52] section 25.3.32, p. 1348, Table 25-54
  * ------------------------------------------------------------------------ */
 
