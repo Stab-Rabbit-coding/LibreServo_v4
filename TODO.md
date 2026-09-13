@@ -47,8 +47,8 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
         ACS711 ±15 A current-sensor rating, and the 4.5–18 V board voltage
         range (no cited component derivation on file). Follow-up: intake
         datasheets for WSD3069DN56, AEAT-8800, and ACS711 — see 1.4.e.
-        **Update 2026-09-13:** the WSD3069DN56 figure is no longer
-        `UNVERIFIED` — see 1.4.e and [60]. AEAT-8800 and ACS711 remain so.
+        **Update 2026-09-13:** the WSD3069DN56 and AEAT-8800 figures are no
+        longer `UNVERIFIED` — see 1.4.e and [60]/[61]. ACS711 remains so.
   - `PCB/*-swap.md` and `PCB/ReadMe.md` were also checked: their technical
         claims already carry inline datasheet section/page citations (now
         cross-verified against [46]–[48] in this same pass) and were not
@@ -64,15 +64,26 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
         item). Cataloged as [60]; the README's "16A continuous" claim, and the
         BOM's `1.5V@250uA` / `15mΩ@10V,10A` figures, all matched the datasheet
         exactly — no correction needed, `UNVERIFIED` marker removed.
-        **AEAT-8800 and ACS711 still open**: neither datasheet has been
-        supplied or fetched. Manufacturer datasheet URLs were located
-        (`docs.broadcom.com/docs/pub-005892` for AEAT-8800-Q24;
-        `allegromicro.com/~/media/files/datasheets/acs711-datasheet.ashx` for
-        ACS711) but not fetched — both hosts (`broadcom.com`,
-        `allegromicro.com`) are blocked by this session's network egress
-        policy, same as `ti.com`. Remains blocked pending either the files
-        being supplied directly (as WSD3069DN56 was) or network access to
-        those hosts.
+        **AEAT-8800-Q24 done (2026-09-13)**: manufacturer datasheet
+        (Broadcom, pub-005892, May 17 2017) supplied directly by the project
+        owner, same as WSD3069DN56 above (`broadcom.com` is blocked by this
+        session's egress policy — the URL was located by web search but not
+        itself fetched). Cataloged as [61]; the README's "16 bits of
+        resolution! 360 degrees" claim matches the datasheet ("full 360
+        degrees of rotation", "Selectable 10, 12, 14, or 16 bits of absolute
+        resolution") — with the caveat, now recorded in [61], that 16 bits is
+        the top of a *selectable* range rather than a fixed rating, which the
+        README's phrasing doesn't make explicit. `UNVERIFIED` marker removed;
+        no other correction needed. Package (QFN-24) and interface (3-wire
+        SSI plus incremental A/B/I) also cross-checked against the BOM and
+        `PCB/RS485-CANFD-TPM-upgrade.md` — consistent.
+        **ACS711 still open**: datasheet not supplied or fetched. Its
+        manufacturer URL was located
+        (`allegromicro.com/~/media/files/datasheets/acs711-datasheet.ashx`)
+        but `allegromicro.com` is blocked by this session's network egress
+        policy, same as `ti.com`/`broadcom.com`. Remains blocked pending
+        either the file being supplied directly (as the other two were) or
+        network access to that host.
   - [x] 1.4.f **Intake the OPTIGA™ Trust M Solution Reference Manual**
         (2026-08-23). Located in Infineon's own GitHub organization —
         `Infineon/optiga-trust-m-overview`, commit `a45b86bd` — which serves

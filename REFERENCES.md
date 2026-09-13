@@ -723,7 +723,47 @@ Date accessed: 2026-09-13 (document supplied to this session on this date;
 manufacturer's own product page not independently re-fetched, per the network
 constraint recorded in this session — see `TODO.md` 1.4.e).
 
-Cross-repository tag note: tags **[46]–[60]** were assigned sequentially after the
+**[61]** Broadcom Inc., *AEAT-8800-Q24: Magnetic Encoder IC, 10- to 16-Bit
+Programmable Angular Magnetic Encoder*, pub-005892, Broadcom Inc., San Jose, CA,
+USA, May 17, 2017 (copyright 2016–2017). [Online]. Available:
+https://docs.broadcom.com/docs/pub-005892 (URL located by this session via web
+search; not independently re-fetched — the copy below was provided directly by
+the project owner, not fetched by an agent in this session).
+`VERIFIED` — read directly from the supplied copy, 25 pp. Manufacturer identity,
+part number, publication number, and date all confirmed from the document's own
+cover page ("AEAT-8800-Q24", "BROADCOM", "Data Sheet") and its closing page
+("pub-005892 – May 17, 2017", "Copyright © 2016–2017 by Broadcom") — the same
+publication number ("pub-005892") independently located via this session's own
+web search for the part, corroborating provenance.
+Local copy: `PCB/datasheets/AEAT-8800-Q24.pdf` (MD5 `0572d15797af9d171f208c9bc8547093`).
+Section/page, as applied in this repository:
+
+- p. 1, "Description" and "Key Features" — "provides accurate angular
+  measurement over a full 360 degrees of rotation"; "Selectable 10, 12, 14, or
+  16 bits of absolute resolution" — the basis for the README's "16 bits of
+  resolution! 360 degrees" claim. **16 bits is the maximum of a selectable,
+  one-time-programmable range (10/12/14/16), not the part's only or fixed
+  resolution** — this repo's claim happens to describe the top of that range
+  correctly but does not itself state that it's selectable; noted here rather
+  than silently left implicit.
+- p. 4, "Pin Assignment" / Figure 4 and "Pinout Description" — QFN-24 package
+  (5 mm × 5 mm per p. 1 Key Features), matching the BOM's `PCB/LibreServo-v2.3_BOM.txt`
+  line 67 (`U10`, part `AEAT-8800-Q24`, package `QFN24`) exactly, including the
+  three-wire SSI absolute interface (`SSI_SCL_SPI_CLK`, `SSI_NSL_SPI_DI`,
+  `SSI_DO_SPI_DO`) and incremental `A`/`B`/`I` outputs referenced in
+  `PCB/RS485-CANFD-TPM-upgrade.md`'s note on the encoder's separate SSI bus.
+- p. 5, "Recommended Operating Conditions" — supply voltage 4.5–5.5 V (5 V
+  operation) or 3.0–3.6 V (3.3 V operation); incremental output frequency up to
+  1.0 MHz — corroborates `PCB/RS485-CANFD-TPM-upgrade.md`'s characterization of
+  the encoder's SSI link as "1–1.2 MHz" (this datasheet's ceiling is the
+  incremental-output frequency, a related but distinct figure from the SSI
+  clock rate; not fully reconciled, noted rather than asserted as identical).
+Cited in: `README.md`.
+Date accessed: 2026-09-13 (document supplied to this session on this date; the
+publication URL was located by web search the same session but not itself
+fetched).
+
+Cross-repository tag note: tags **[46]–[61]** were assigned sequentially after the
 highest tag already in use in this file ([45]) because this session has no access to
 the sister repository (`Open-Secure-ESC`) to confirm whether it already cites these
 same documents under different tag numbers. Per `AGENTS.md` §2.5 an existing tag is
@@ -748,7 +788,7 @@ These documents are **not** in `PCB/datasheets/` and are known gaps:
 | Document | Why it is wanted | Tracked as |
 | --- | --- | --- |
 | Texas Instruments errata for MSPM0G3518-Q1 / MSPM0G3519-Q1 specifically | SLAZ742G covers a different die — see "Considered and found not applicable" below | `TODO.md` 1.4.d |
-| Datasheets for AEAT-8800, ACS711 | Two remaining `README.md` ratings are marked `UNVERIFIED` for want of them (WSD3069DN56 intaken as [60] on 2026-09-13) | `TODO.md` 1.4.e |
+| Datasheet for ACS711 | One remaining `README.md` rating is marked `UNVERIFIED` for want of it (WSD3069DN56 intaken as [60], AEAT-8800-Q24 as [61], both 2026-09-13) | `TODO.md` 1.4.e |
 | Infineon, *OPTIGA™ Trust M Release Notes*, v3.02 | Present in `Infineon/optiga-trust-m-overview` `docs/pdf/` but deliberately not intaken in the 2026-08-23 pass — no current design claim depends on a release-note item. Fetch it before relying on any firmware-revision-specific behaviour of `U7`. | `TODO.md` 4.12 |
 | Infineon, *OPTIGA™ Trust M Host Library Documentation* (`.chm`) | The Windows-help form of the [57] API reference; the header comments in the cloned source were sufficient and were used instead | (not tracked — [57] source supersedes it) |
 
