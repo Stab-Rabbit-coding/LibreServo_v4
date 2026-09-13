@@ -23,7 +23,7 @@ A few characteristics of LibreServo:
     Position sensor: Magnetic encoder, 16 bits of resolution! 360 degrees (AEAT-8800) [61] — matches the datasheet exactly: "Selectable 10, 12, 14, or 16 bits of absolute resolution" over "a full 360 degrees of rotation" (16 bits is the maximum selectable, one-time-programmable option, not a fixed rating — see [61]). Using the servo motor potentiometer will be possible to lower the cost but will lost precision and some characteristics.
     For the encoder I have designed 3D parts to substitute the potentiometer and used the same hole/space than the original.
     LibreServo will generate their own curves (sine ramps, trapezoidal ramps, hermitian curves...)
-    Current sensor: +-15A ACS711 — UNVERIFIED — needs primary source (see TODO.md): no local datasheet for ACS711 has been intaken against this figure.
+    Current sensor: ±15.5A ACS711 [62] (corrected from "±15A" 2026-09-13: the BOM's exact part, `ACS711KEXLT-15AB-T`, is rated ±15.5A per its datasheet's Selection Guide — see [62]; ±15A was never an exact figure the part offers).
 Communication Protocol: <a href="https://www.libreservo.com/en/articulo/libreservo-commands-part-one">LibreServo Commands</a><BR>
 <img src="https://www.libreservo.com/sites/libreservo.com/files/imagenes/Main-Encoder-PCB.jpg" width="550" height="412">
 

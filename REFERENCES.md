@@ -763,7 +763,43 @@ Date accessed: 2026-09-13 (document supplied to this session on this date; the
 publication URL was located by web search the same session but not itself
 fetched).
 
-Cross-repository tag note: tags **[46]–[61]** were assigned sequentially after the
+**[62]** Allegro MicroSystems, Inc., *ACS711: Hall-Effect Linear Current Sensor
+with Overcurrent Fault Output for <100 V Isolation Applications*, ACS711A-DS,
+Rev. 9, Allegro MicroSystems, Inc., Manchester, NH, USA, Jan. 24, 2025. [Online].
+Available:
+https://www.allegromicro.com/~/media/files/datasheets/acs711-datasheet.ashx
+(URL located by this session via web search; not independently re-fetched — the
+copy below was provided directly by the project owner, not fetched by an agent
+in this session).
+`VERIFIED` — read directly from the supplied copy, 22 pp. Manufacturer identity,
+part number, and revision/date all confirmed from the document's own header
+("ALLEGRO microsystems", "ACS711") and footer ("ACS711A-DS, Rev. 9",
+"January 24, 2025", "MCO-0000224", Allegro's Manchester, NH address) on every
+page.
+Local copy: `PCB/datasheets/ACS711-Datasheet.pdf` (MD5 `cd4a0a48a0ebbd086b7bde10410b3055`).
+Section/page, as applied in this repository:
+
+- p. 2, "SELECTION GUIDE" — the BOM's exact part, `ACS711KEXLT-15AB-T`
+  (`PCB/LibreServo-v2.3_BOM.txt` line 65, `U4`), has Optimized Accuracy Range
+  `I_P` = **±15.5 A**, sensitivity 90 mV/A, 12-contact QFN package with fused
+  current loop. **Finding: README.md's "±15A ACS711" was never an exact figure
+  this part offers** — the datasheet's actual full-scale sensing ranges are
+  ±12.5 A / ±25 A (LC package) and ±15.5 A / ±31 A (EX package); the BOM itself
+  already carried the correct ±15.5 A figure, so this was purely a README
+  rounding that had drifted from its own BOM. Corrected in place.
+- p. 1, "FEATURES AND BENEFITS" / "DESCRIPTION" — Hall-effect linear current
+  sensor, no external sense resistor, <100 V isolation, output voltage
+  proportional to AC or DC current, 100 kHz bandwidth, ratiometric output.
+  General confirmation of the part's function as used in this design.
+- p. 3, "PINOUT DIAGRAMS" (EX package) and "TERMINAL LIST TABLE" — matches the
+  BOM's `ACS711-QFN` footprint reference and package description
+  (`QFN-12(3x3)`).
+Cited in: `README.md`.
+Date accessed: 2026-09-13 (document supplied to this session on this date; the
+publication URL was located by web search the same session but not itself
+fetched).
+
+Cross-repository tag note: tags **[46]–[62]** were assigned sequentially after the
 highest tag already in use in this file ([45]) because this session has no access to
 the sister repository (`Open-Secure-ESC`) to confirm whether it already cites these
 same documents under different tag numbers. Per `AGENTS.md` §2.5 an existing tag is
@@ -788,7 +824,6 @@ These documents are **not** in `PCB/datasheets/` and are known gaps:
 | Document | Why it is wanted | Tracked as |
 | --- | --- | --- |
 | Texas Instruments errata for MSPM0G3518-Q1 / MSPM0G3519-Q1 specifically | SLAZ742G covers a different die — see "Considered and found not applicable" below | `TODO.md` 1.4.d |
-| Datasheet for ACS711 | One remaining `README.md` rating is marked `UNVERIFIED` for want of it (WSD3069DN56 intaken as [60], AEAT-8800-Q24 as [61], both 2026-09-13) | `TODO.md` 1.4.e |
 | Infineon, *OPTIGA™ Trust M Release Notes*, v3.02 | Present in `Infineon/optiga-trust-m-overview` `docs/pdf/` but deliberately not intaken in the 2026-08-23 pass — no current design claim depends on a release-note item. Fetch it before relying on any firmware-revision-specific behaviour of `U7`. | `TODO.md` 4.12 |
 | Infineon, *OPTIGA™ Trust M Host Library Documentation* (`.chm`) | The Windows-help form of the [57] API reference; the header comments in the cloned source were sufficient and were used instead | (not tracked — [57] source supersedes it) |
 

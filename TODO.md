@@ -47,13 +47,15 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
         ACS711 ±15 A current-sensor rating, and the 4.5–18 V board voltage
         range (no cited component derivation on file). Follow-up: intake
         datasheets for WSD3069DN56, AEAT-8800, and ACS711 — see 1.4.e.
-        **Update 2026-09-13:** the WSD3069DN56 and AEAT-8800 figures are no
-        longer `UNVERIFIED` — see 1.4.e and [60]/[61]. ACS711 remains so.
+        **Update 2026-09-13:** none of the three is `UNVERIFIED` any longer —
+        see 1.4.e (now closed) and [60]/[61]/[62]. The ACS711 figure was also
+        corrected in the process, from "±15A" to the datasheet's actual
+        "±15.5A".
   - `PCB/*-swap.md` and `PCB/ReadMe.md` were also checked: their technical
         claims already carry inline datasheet section/page citations (now
         cross-verified against [46]–[48] in this same pass) and were not
         found to need further sourcing.
-  - [~] 1.4.e Intake datasheets for WSD3069DN56, AEAT-8800, and ACS711 (none
+  - [x] 1.4.e Intake datasheets for WSD3069DN56, AEAT-8800, and ACS711 (none
         present in `PCB/datasheets/`) and cite their README.md claims, or
         correct the claims if the primary source disagrees.
         **WSD3069DN56 done (2026-09-13)**: manufacturer datasheet (Winsok
@@ -77,13 +79,18 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
         no other correction needed. Package (QFN-24) and interface (3-wire
         SSI plus incremental A/B/I) also cross-checked against the BOM and
         `PCB/RS485-CANFD-TPM-upgrade.md` — consistent.
-        **ACS711 still open**: datasheet not supplied or fetched. Its
-        manufacturer URL was located
-        (`allegromicro.com/~/media/files/datasheets/acs711-datasheet.ashx`)
-        but `allegromicro.com` is blocked by this session's network egress
-        policy, same as `ti.com`/`broadcom.com`. Remains blocked pending
-        either the file being supplied directly (as the other two were) or
-        network access to that host.
+        **ACS711 done (2026-09-13)**: manufacturer datasheet (Allegro
+        MicroSystems, ACS711A-DS Rev. 9, Jan. 24 2025) supplied directly by
+        the project owner, same as the two above (`allegromicro.com` is
+        blocked by this session's egress policy — the URL was located by web
+        search but not itself fetched). Cataloged as [62]. **This one needed
+        an actual correction, not just a citation**: README's "±15A" was never
+        an exact figure the part offers — the datasheet's Selection Guide
+        gives the BOM's exact part (`ACS711KEXLT-15AB-T`) a rated range of
+        **±15.5 A**, and the BOM itself (`PCB/LibreServo-v2.3_BOM.txt` line 65)
+        already carried that correct figure; only the README had drifted from
+        it. Corrected to "±15.5A" with citation; `UNVERIFIED` marker removed.
+        **1.4.e closed — all three parts intaken.**
   - [x] 1.4.f **Intake the OPTIGA™ Trust M Solution Reference Manual**
         (2026-08-23). Located in Infineon's own GitHub organization —
         `Infineon/optiga-trust-m-overview`, commit `a45b86bd` — which serves
