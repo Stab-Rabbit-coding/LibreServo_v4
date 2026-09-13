@@ -144,6 +144,18 @@ Section/page, as applied in this repository:
   both on the same I²C instance (`I2C0`). Wired into
   `PCB/kicad/LibreServo-v4.0.0.kicad_sch` (`U1` pins 2 and 12) 2026-08-22 — see
   `TODO.md` 3.1/3.3/4.3 and `PCB/MSPM0G3518-MCU-swap.md` §3.
+- p. 58, §7.9.1 "System Oscillator (SYSOSC)", Table — factory-trimmed SYSOSC
+  frequency: `SYSOSCCFG.FREQ`=00 (BASE) = 32 MHz, =01 = 4 MHz; user-trimmed 24 MHz
+  and 16 MHz options also listed. Basis for the SYSOSC BASE-frequency figure used
+  in `TODO.md` 7.3.
+- p. 74, §8.1, Figure 8-1 "MSPM0G351x-Q1 Functional Block Diagram" — `I2C0`,
+  `I2C1`, `I2C2` are drawn under "PD0 PERIPHERAL BUS (ULPCLK)".
+- p. 76, Table 8-1 "Supported Functionality by Operating Mode" — `I2C0/1/2` listed
+  under "PD0 Peripherals". Confirms I2C0 (this design's secure-element bus) is a
+  PD0 instance, so its `BUSCLK` (per [52] §25.2.1.1) is `ULPCLK`, not `MCLK`
+  directly. Basis, with the SYSOSC figure above and [52]'s MCLK/ULPCLK-tree
+  citations, for the verified `LS_I2C_FUNCTIONAL_CLK_HZ` value in
+  `firmware/pal/ls_board.h` — closes `TODO.md` 7.3.
 - p. 84, §8.9 "Flash Memory" — dual-bank flash (up to 256 kB/512 kB total) with a
   separate 16 kB data flash bank and bank-address swap for OTA updates.
 - p. 88, §8.18 "Security" — debug security, device identity, AES-128/256 (GCM/GMAC,
@@ -160,8 +172,10 @@ Section/page, as applied in this repository:
 
 Cited in: `README.md`; `PCB/MSPM0G3518-MCU-swap.md`; `PCB/ReadMe.md`;
 `PCB/kicad/LibreServo-v4.0.0.kicad_sch` (`U1`, symbol description);
-`PCB/kicad/LibreServo-v4.0.0-eagle-import.kicad_sym`; `TODO.md`.
-Date accessed: 2026-08-22.
+`PCB/kicad/LibreServo-v4.0.0-eagle-import.kicad_sym`; `firmware/pal/ls_board.h`;
+`TODO.md`.
+Date accessed: 2026-08-22 (identity, pins 6.2, security 8.18, unused-pin 6.4);
+2026-09-12 (SYSOSC 7.9.1, PD0 assignment 8.1/Table 8-1, added for `TODO.md` 7.3).
 
 **[47]** Analog Devices, Inc., *ADM2582E/ADM2587E: Signal and Power Isolated RS-485
 Transceiver With ±15 kV ESD Protection*, Rev. H, Analog Devices, Inc., Wilmington, MA,
@@ -312,10 +326,87 @@ Section/page, as applied in this repository:
   Equation-27 derivation above produces.
 - **§25.3.38, p. 1355, Table 25-60** `CCR` — `CLKSTRETCH` bit 2, `MCTL`
   (multi-controller) bit 1, `ACTIVE` bit 0.
+- **§2.3.2.1, p. 213, Table 2-7** "MCLK Source Selection in RUN and SLEEP Mode" and
+  **p. 224 note** (§2.3.4 area) — "In all BOOTRST scenarios, MCLK will be sourced
+  from SYSOSC at BASE frequency." The reset-default MCLK source and rate.
+- **§2.3.2.3, p. 216** "ULPCLK (Low-Power Clock)" — "When MCLK is configured to
+  run from SYSOSC or LFCLK, SYSCTL disables UDIV automatically and fULPCLK=fMCLK
+  as these clock sources are always <=32MHz." Establishes ULPCLK = MCLK with no
+  divider whenever MCLK is SYSOSC-sourced, as it is at reset and as this firmware
+  leaves it (no clock-tree reconfiguration exists — `TODO.md` 7.1).
+- **§25.2.1.1, p. 1285** "Clock Select and I2C Speed" — "Use I2Cx.CLKSEL register
+  to select the source of the I2C functional clock... BUSSCLK: the current bus
+  clock is selected as the source for I2C. The current bus clock depends on power
+  domain. If the I2C instance is in power domain 1 (PD1) refer to MCLK, if the
+  I2C instance is in power domain 0 (PD0) refer to ULPCLK." Combined with [46]
+  p. 74/76 (I2C0 is PD0), this is the chain that verifies
+  `LS_I2C_FUNCTIONAL_CLK_HZ` = 32 MHz in `firmware/pal/ls_board.h` — closes
+  `TODO.md` 7.3.
+- **§25.3.6, p. 1317, Table 25-28** `CLKSEL` **[Reset = 00000000h]** — bit 3
+  `BUSCLK_SEL`, bit 2 `MFCLK_SEL`, both reset to 0. **Finding:** neither bit is
+  set out of reset, so the I2C module selects **no** functional clock source
+  until software writes one — the prior assumption in `ls_pal_i2c.c` that
+  "reset values" meant BUSCLK was wrong. `pal_i2c_init()` now writes
+  `CLKSEL.BUSCLK_SEL` explicitly (2026-09-12 fix, part of closing `TODO.md` 7.3).
+- **§25.3.5, p. 1316, Table 25-27** `CLKDIV` **[Reset = 00000000h]** — `RATIO`
+  bits 2-0, 0h = divide by 1. Confirms the driver's existing assumption that
+  leaving `CLKDIV` at its reset value gives an undivided functional clock is
+  correct (unlike `CLKSEL`, above).
+- **§1.4.1, p. 20** "Configuration Memory (NONMAIN)" — NONMAIN is a dedicated
+  flash region holding BCR/BSL boot configuration; not affected by a mass
+  erase, but erased/reset to factory defaults by a factory-reset command.
+- **§1.4.2.1, pp. 22–25, Table 1-4 and §§1.4.2.1.1–1.4.2.1.3** "Serial Wire
+  Debug Related Policies" — the three generic SWD security levels (0 = no
+  restrictions, 1 = custom per-function restrictions, 2 = SW-DP fully
+  disabled) and their recommended use; p. 24 explicitly recommends Level 1
+  "for most standard production use-cases"; p. 25 warns Level 2 forecloses
+  both TI failure analysis and any future SWD access with no recovery path.
+- **§1.4.2.3.1–§1.4.2.3.3, pp. 26–27** "Flash Memory Protection and Integrity
+  Related Policies" — static write protection of MAIN flash sectors
+  (`FLASHSWP0`/`FLASHSWP1` fields) and of the NONMAIN region itself
+  (`BOOTCFG4.NONMAINSWP`); p. 27's note: once NONMAIN is statically protected
+  and the factory-reset/TI-FA SWD commands are disabled, "the NONMAIN is
+  equivalent to immutable read-only memory, and it is no longer possible to
+  change the device configuration by any means" — the one-way-door property
+  `TODO.md` 4.13 is built around.
+- **§1.4.4, p. 30, Table 1-6** "NONMAIN Layout Types" — **MSPM0G351x devices
+  use NONMAIN layout Type F** specifically (distinct from Type A and Type E).
+  Also notes "The MSPM0-SDK includes a configurator tool to help the user
+  configure NONMAIN contents."
+- **§1.4.5, p. 31 "NONMAIN_TYPEA Registers" and §1.4.6, p. 60 "NONMAIN_TYPEE
+  Registers"** — full register-level appendices are present locally for
+  Types A and E **but not for Type F**, confirmed by an exhaustive text
+  search of this local copy (the only "Type F" match anywhere in the
+  document is the unrelated §1.5.4 FACTORYREGION_TYPEF, p. 141). **This is a
+  real, flagged gap**, not a claim resolved by this document: the exact
+  Type F field layout for MSPM0G351x-Q1 is UNVERIFIED here — see `TODO.md`
+  4.13.
+- **§4.1.1–§4.2.1, pp. 465–467** "Secure Boot" / "Customer Secure Code (CSC)"
+  — the CSC boot flow (`SYSCTL.SECCFG.SECSTATUS.INITDONE`, set with
+  `1 | (0x9D << 24)` per the pseudocode on p. 467) and the security
+  configuration actions CSC performs (keystore provisioning, bank-swap and
+  SRAM-boundary setup, flash firewall provisioning) before locking itself out
+  via `INITDONE`.
+- **§4.4.5, p. 470** "Data Bank Protection" — `SYSCTL.SECCFG.FRWPROTDATA`
+  configures the first 4 kB of the DATA flash bank at 1 kB sector
+  granularity, independently as read-protected, write-protected, both, or
+  neither; CPU/DMA/debugger accesses are all treated the same way. **No
+  register offset or bit-field table for any `SYSCTL.SECCFG.*` register is
+  present in this local copy** (confirmed by checking every page containing
+  "SECCFG") — the field name is verified, its address/bit-position is not;
+  see `TODO.md` 4.13.
+- **§6.3, pp. 548–557** "Flash Controller" — the PROGRAM, ERASE, READVERIFY
+  and BLANKVERIFY command sequences. Device-generic (not Type A/E/F
+  dependent), unlike the NONMAIN/SECCFG provisioning-policy fields above; the
+  basis for the flash read/write implementation still owed by
+  `firmware/pal/ls_secure_store.c` per `TODO.md` 4.13.
 Local copy: `PCB/datasheets/slau846e.pdf`.
 Cited in: `firmware/pal/mspm0/ls_mspm0_i2c_regs.h`; `firmware/pal/ls_pal_i2c.c`;
-`firmware/README.md`.
-Date accessed: 2026-08-23 (sections above); 2026-08-22 (identity).
+`firmware/pal/ls_board.h`; `firmware/README.md`; `TODO.md` 4.13, 7.3.
+Date accessed: 2026-08-23 (sections through §25.3.38); 2026-08-22 (identity);
+2026-09-12 (MCLK/ULPCLK tree §§2.3.2.1/2.3.2.3, CLKSEL/CLKDIV §§25.3.5/25.3.6
+for `TODO.md` 7.3; NONMAIN/BCR §§1.4.1–1.4.6, SECURITY §§4.1–4.4.5, Flash
+Controller §6.3, for `TODO.md` 4.13).
 
 **[53]** Infineon Technologies AG, *OPTIGA™ Trust M — Solution Reference Manual*,
 Rev. 3.70, Infineon Technologies AG, Munich, Germany, 2024-10-09. [Online].
@@ -598,7 +689,117 @@ Cited in: `firmware/pal/ls_pal_crypt.c`; `firmware/pal/ls_crypto_backend.h`;
 `firmware/README.md`; `PCB/servo-bus-security-protocol.md` §4.4.4.
 Date accessed: 2026-08-23.
 
-Cross-repository tag note: tags **[46]–[59]** were assigned sequentially after the
+**[60]** Winsok Semiconductor Co., Ltd., *WSD3069DN56: N-Ch and P-Channel MOSFET*,
+Rev. 2, Winsok Semiconductor Co., Ltd., Shenzhen, China, Apr. 2019. [Online].
+Available: https://www.winsok.tw (product page for WSD3069DN56; direct PDF URL not
+captured — the copy below was provided directly by the project owner, not fetched
+by an agent in this session).
+`VERIFIED` — read directly from the supplied copy, 5 pp. Manufacturer identity,
+part number, and revision/date all confirmed from the document's own header/footer
+on every page ("WiNSOK SEMICONDUCTOR", "WSD3069DN56", "Rev 2: Apr.2019",
+"www.winsok.tw"); internally consistent across the Product Summary table,
+per-channel Absolute Maximum Ratings, and per-channel Electrical Characteristics
+tables — not a claim taken from a single isolated figure.
+Local copy: `PCB/datasheets/WSD3069DN56.pdf` (MD5 `2caafbfdf2a36473c6a0e67deb91fb51`).
+Section/page, as applied in this repository:
+
+- p. 1, "Product Summery" [*sic*, manufacturer's own spelling] table and
+  N-Channel "Absolute Maximum Ratings" table — `BVDSS` 30 V (N) / −30 V (P);
+  `RDSON` 15 mΩ; `ID` (continuous drain current, `TC` = 25°C) **16 A** (N) /
+  −16 A (P) — exactly the figure `README.md` cites and the BOM
+  (`PCB/LibreServo-v2.3_BOM.txt` lines 31–32, parts `M2`/`M3`) already carried.
+  Derates to 10.5 A (N) / −12.5 A (P) at `TC` = 100°C — not previously stated
+  anywhere in this repo, added as a caveat alongside the headline figure.
+- p. 1, "DFN5X6C-8 Pin Configuration" — confirms the DFN5X6, 8-pin package the BOM
+  and `PCB/kicad/LibreServo-v4.0.0.pretty/` footprint library assume, with two
+  independent MOSFETs (`D1`/`G1`/`S1` = N-channel, `D2`/`G2`/`S2` = P-channel) in
+  one package, matching the BOM's "1PCS N-Channel+1PCS P-Channel" description.
+- p. 2, N-Channel "Electrical Characteristics" table — `VGS(th)` (gate threshold)
+  1.5 V typ. at `IDS` = 250 µA — matches the BOM's "1.5V@250uA" figure exactly;
+  `RDS(ON)` 15 mΩ typ. / 19.5 mΩ max at `VGS` = 10 V, `IDS` = 10 A — matches the
+  BOM's "15mΩ@10V,10A" figure exactly.
+Cited in: `README.md`.
+Date accessed: 2026-09-13 (document supplied to this session on this date;
+manufacturer's own product page not independently re-fetched, per the network
+constraint recorded in this session — see `TODO.md` 1.4.e).
+
+**[61]** Broadcom Inc., *AEAT-8800-Q24: Magnetic Encoder IC, 10- to 16-Bit
+Programmable Angular Magnetic Encoder*, pub-005892, Broadcom Inc., San Jose, CA,
+USA, May 17, 2017 (copyright 2016–2017). [Online]. Available:
+https://docs.broadcom.com/docs/pub-005892 (URL located by this session via web
+search; not independently re-fetched — the copy below was provided directly by
+the project owner, not fetched by an agent in this session).
+`VERIFIED` — read directly from the supplied copy, 25 pp. Manufacturer identity,
+part number, publication number, and date all confirmed from the document's own
+cover page ("AEAT-8800-Q24", "BROADCOM", "Data Sheet") and its closing page
+("pub-005892 – May 17, 2017", "Copyright © 2016–2017 by Broadcom") — the same
+publication number ("pub-005892") independently located via this session's own
+web search for the part, corroborating provenance.
+Local copy: `PCB/datasheets/AEAT-8800-Q24.pdf` (MD5 `0572d15797af9d171f208c9bc8547093`).
+Section/page, as applied in this repository:
+
+- p. 1, "Description" and "Key Features" — "provides accurate angular
+  measurement over a full 360 degrees of rotation"; "Selectable 10, 12, 14, or
+  16 bits of absolute resolution" — the basis for the README's "16 bits of
+  resolution! 360 degrees" claim. **16 bits is the maximum of a selectable,
+  one-time-programmable range (10/12/14/16), not the part's only or fixed
+  resolution** — this repo's claim happens to describe the top of that range
+  correctly but does not itself state that it's selectable; noted here rather
+  than silently left implicit.
+- p. 4, "Pin Assignment" / Figure 4 and "Pinout Description" — QFN-24 package
+  (5 mm × 5 mm per p. 1 Key Features), matching the BOM's `PCB/LibreServo-v2.3_BOM.txt`
+  line 67 (`U10`, part `AEAT-8800-Q24`, package `QFN24`) exactly, including the
+  three-wire SSI absolute interface (`SSI_SCL_SPI_CLK`, `SSI_NSL_SPI_DI`,
+  `SSI_DO_SPI_DO`) and incremental `A`/`B`/`I` outputs referenced in
+  `PCB/RS485-CANFD-TPM-upgrade.md`'s note on the encoder's separate SSI bus.
+- p. 5, "Recommended Operating Conditions" — supply voltage 4.5–5.5 V (5 V
+  operation) or 3.0–3.6 V (3.3 V operation); incremental output frequency up to
+  1.0 MHz — corroborates `PCB/RS485-CANFD-TPM-upgrade.md`'s characterization of
+  the encoder's SSI link as "1–1.2 MHz" (this datasheet's ceiling is the
+  incremental-output frequency, a related but distinct figure from the SSI
+  clock rate; not fully reconciled, noted rather than asserted as identical).
+Cited in: `README.md`.
+Date accessed: 2026-09-13 (document supplied to this session on this date; the
+publication URL was located by web search the same session but not itself
+fetched).
+
+**[62]** Allegro MicroSystems, Inc., *ACS711: Hall-Effect Linear Current Sensor
+with Overcurrent Fault Output for <100 V Isolation Applications*, ACS711A-DS,
+Rev. 9, Allegro MicroSystems, Inc., Manchester, NH, USA, Jan. 24, 2025. [Online].
+Available:
+https://www.allegromicro.com/~/media/files/datasheets/acs711-datasheet.ashx
+(URL located by this session via web search; not independently re-fetched — the
+copy below was provided directly by the project owner, not fetched by an agent
+in this session).
+`VERIFIED` — read directly from the supplied copy, 22 pp. Manufacturer identity,
+part number, and revision/date all confirmed from the document's own header
+("ALLEGRO microsystems", "ACS711") and footer ("ACS711A-DS, Rev. 9",
+"January 24, 2025", "MCO-0000224", Allegro's Manchester, NH address) on every
+page.
+Local copy: `PCB/datasheets/ACS711-Datasheet.pdf` (MD5 `cd4a0a48a0ebbd086b7bde10410b3055`).
+Section/page, as applied in this repository:
+
+- p. 2, "SELECTION GUIDE" — the BOM's exact part, `ACS711KEXLT-15AB-T`
+  (`PCB/LibreServo-v2.3_BOM.txt` line 65, `U4`), has Optimized Accuracy Range
+  `I_P` = **±15.5 A**, sensitivity 90 mV/A, 12-contact QFN package with fused
+  current loop. **Finding: README.md's "±15A ACS711" was never an exact figure
+  this part offers** — the datasheet's actual full-scale sensing ranges are
+  ±12.5 A / ±25 A (LC package) and ±15.5 A / ±31 A (EX package); the BOM itself
+  already carried the correct ±15.5 A figure, so this was purely a README
+  rounding that had drifted from its own BOM. Corrected in place.
+- p. 1, "FEATURES AND BENEFITS" / "DESCRIPTION" — Hall-effect linear current
+  sensor, no external sense resistor, <100 V isolation, output voltage
+  proportional to AC or DC current, 100 kHz bandwidth, ratiometric output.
+  General confirmation of the part's function as used in this design.
+- p. 3, "PINOUT DIAGRAMS" (EX package) and "TERMINAL LIST TABLE" — matches the
+  BOM's `ACS711-QFN` footprint reference and package description
+  (`QFN-12(3x3)`).
+Cited in: `README.md`.
+Date accessed: 2026-09-13 (document supplied to this session on this date; the
+publication URL was located by web search the same session but not itself
+fetched).
+
+Cross-repository tag note: tags **[46]–[62]** were assigned sequentially after the
 highest tag already in use in this file ([45]) because this session has no access to
 the sister repository (`Open-Secure-ESC`) to confirm whether it already cites these
 same documents under different tag numbers. Per `AGENTS.md` §2.5 an existing tag is
@@ -623,7 +824,6 @@ These documents are **not** in `PCB/datasheets/` and are known gaps:
 | Document | Why it is wanted | Tracked as |
 | --- | --- | --- |
 | Texas Instruments errata for MSPM0G3518-Q1 / MSPM0G3519-Q1 specifically | SLAZ742G covers a different die — see "Considered and found not applicable" below | `TODO.md` 1.4.d |
-| Datasheets for WSD3069DN56, AEAT-8800, ACS711 | Three `README.md` ratings are marked `UNVERIFIED` for want of them | `TODO.md` 1.4.e |
 | Infineon, *OPTIGA™ Trust M Release Notes*, v3.02 | Present in `Infineon/optiga-trust-m-overview` `docs/pdf/` but deliberately not intaken in the 2026-08-23 pass — no current design claim depends on a release-note item. Fetch it before relying on any firmware-revision-specific behaviour of `U7`. | `TODO.md` 4.12 |
 | Infineon, *OPTIGA™ Trust M Host Library Documentation* (`.chm`) | The Windows-help form of the [57] API reference; the header comments in the cloned source were sufficient and were used instead | (not tracked — [57] source supersedes it) |
 

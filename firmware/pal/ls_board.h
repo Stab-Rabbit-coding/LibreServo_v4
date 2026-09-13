@@ -57,16 +57,38 @@ extern "C" {
  *  fabricated board's measured bus capacitance first — see TODO.md 5.3. */
 #define LS_SE_I2C_SCL_HZ            (400000UL)
 
-/** Assumed I2C functional clock, in Hz, after CLKSEL/CLKDIV ([52] section 25.2.1).
+/** I2C0 functional clock, in Hz, after CLKSEL/CLKDIV ([52] section 25.2.1).
  *
- *  UNVERIFIED — needs primary source (see TODO.md): this design has no clock-tree
- *  configuration yet (TODO.md 7.1: the firmware is a full rewrite and nothing in
- *  Src/ reflects the current MCU), so the functional clock this peripheral will
- *  actually see is not yet a settled fact.  32 MHz is used here because it is the
- *  value [52] section 25.2.1 works its own TPR example with, which makes the
- *  derived TPR checkable against the document.  `pal_i2c_init()` recomputes TPR
- *  from whatever this holds; correct this constant when the clock tree is
- *  designed — never hand-patch the TPR.  Tracked as TODO.md 7.3. */
+ *  VERIFIED for the reset-default clock configuration this design relies on
+ *  (TODO.md 7.3, closed): this firmware tree performs no clock-tree
+ *  reconfiguration (TODO.md 7.1 — the full servo firmware, which might one day
+ *  need a faster MCLK, is a separate, not-yet-written rewrite that does not
+ *  touch this tree), so MCLK stays at its post-reset state throughout. Chain:
+ *    - [52] p. 224 note (section 2.3.4 area): "In all BOOTRST scenarios, MCLK
+ *      will be sourced from SYSOSC at BASE frequency."
+ *    - [46] p. 58 section 7.9.1, Table: factory-trimmed SYSOSC BASE frequency
+ *      (SYSOSCCFG.FREQ=00) is 32 MHz.
+ *    - I2C0 is a PD0 peripheral ([46] p. 74 Fig. 8-1 "PD0 PERIPHERAL BUS
+ *      (ULPCLK)"; p. 76 Table 8-1 lists I2C0/1/2 under "PD0 Peripherals"), so
+ *      its BUSCLK is ULPCLK, not MCLK directly ([52] p. 1285 section 25.2.1.1).
+ *    - [52] p. 216 section 2.3.2.3 (ULPCLK): when MCLK is sourced from SYSOSC
+ *      (the reset default, not switched to HSCLK/LFCLK by this firmware),
+ *      "SYSCTL disables UDIV automatically and fULPCLK=fMCLK as these clock
+ *      sources are always <=32MHz" — so ULPCLK equals MCLK equals SYSOSC here,
+ *      with no divider in the way.
+ *  Net result: 32 MHz, exactly the value already in use, is the correct,
+ *  cited figure for as long as this firmware leaves the clock tree at its
+ *  post-reset state. `pal_i2c_init()` recomputes TPR from this constant; if a
+ *  future clock-tree reconfiguration changes MCLK, update this constant to
+ *  match — never hand-patch the TPR.
+ *
+ *  A second, more serious finding from the same pass ([52] p. 1317 section
+ *  25.3.6, Table 25-28): I2Cx.CLKSEL itself resets to 0x0, which selects
+ *  NEITHER BUSCLK nor MFCLK — I2C0 would receive no functional clock at all
+ *  without an explicit write. This constant being numerically correct never
+ *  depended on CLKSEL's reset state, but the driver's old assumption that
+ *  CLKSEL's reset state *was* BUSCLK was wrong and has been corrected in
+ *  `ls_pal_i2c.c` (`pal_i2c_init()` now writes CLKSEL explicitly). */
 #define LS_I2C_FUNCTIONAL_CLK_HZ    (32000000UL)
 
 /* ------------------------------------------------------------------------
