@@ -47,13 +47,32 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
         ACS711 ±15 A current-sensor rating, and the 4.5–18 V board voltage
         range (no cited component derivation on file). Follow-up: intake
         datasheets for WSD3069DN56, AEAT-8800, and ACS711 — see 1.4.e.
+        **Update 2026-09-13:** the WSD3069DN56 figure is no longer
+        `UNVERIFIED` — see 1.4.e and [60]. AEAT-8800 and ACS711 remain so.
   - `PCB/*-swap.md` and `PCB/ReadMe.md` were also checked: their technical
         claims already carry inline datasheet section/page citations (now
         cross-verified against [46]–[48] in this same pass) and were not
         found to need further sourcing.
-  - [ ] 1.4.e Intake datasheets for WSD3069DN56, AEAT-8800, and ACS711 (none
+  - [~] 1.4.e Intake datasheets for WSD3069DN56, AEAT-8800, and ACS711 (none
         present in `PCB/datasheets/`) and cite their README.md claims, or
         correct the claims if the primary source disagrees.
+        **WSD3069DN56 done (2026-09-13)**: manufacturer datasheet (Winsok
+        Semiconductor, Rev 2, Apr. 2019) supplied directly by the project owner
+        after this session found neither an uploaded copy nor network access to
+        fetch one itself (`ti.com`/`broadcom.com`/`allegromicro.com` are blocked
+        by this session's egress policy — see the 2026-09-12 finding on this
+        item). Cataloged as [60]; the README's "16A continuous" claim, and the
+        BOM's `1.5V@250uA` / `15mΩ@10V,10A` figures, all matched the datasheet
+        exactly — no correction needed, `UNVERIFIED` marker removed.
+        **AEAT-8800 and ACS711 still open**: neither datasheet has been
+        supplied or fetched. Manufacturer datasheet URLs were located
+        (`docs.broadcom.com/docs/pub-005892` for AEAT-8800-Q24;
+        `allegromicro.com/~/media/files/datasheets/acs711-datasheet.ashx` for
+        ACS711) but not fetched — both hosts (`broadcom.com`,
+        `allegromicro.com`) are blocked by this session's network egress
+        policy, same as `ti.com`. Remains blocked pending either the files
+        being supplied directly (as WSD3069DN56 was) or network access to
+        those hosts.
   - [x] 1.4.f **Intake the OPTIGA™ Trust M Solution Reference Manual**
         (2026-08-23). Located in Infineon's own GitHub organization —
         `Infineon/optiga-trust-m-overview`, commit `a45b86bd` — which serves

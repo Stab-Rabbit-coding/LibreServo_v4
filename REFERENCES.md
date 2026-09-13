@@ -689,7 +689,41 @@ Cited in: `firmware/pal/ls_pal_crypt.c`; `firmware/pal/ls_crypto_backend.h`;
 `firmware/README.md`; `PCB/servo-bus-security-protocol.md` §4.4.4.
 Date accessed: 2026-08-23.
 
-Cross-repository tag note: tags **[46]–[59]** were assigned sequentially after the
+**[60]** Winsok Semiconductor Co., Ltd., *WSD3069DN56: N-Ch and P-Channel MOSFET*,
+Rev. 2, Winsok Semiconductor Co., Ltd., Shenzhen, China, Apr. 2019. [Online].
+Available: https://www.winsok.tw (product page for WSD3069DN56; direct PDF URL not
+captured — the copy below was provided directly by the project owner, not fetched
+by an agent in this session).
+`VERIFIED` — read directly from the supplied copy, 5 pp. Manufacturer identity,
+part number, and revision/date all confirmed from the document's own header/footer
+on every page ("WiNSOK SEMICONDUCTOR", "WSD3069DN56", "Rev 2: Apr.2019",
+"www.winsok.tw"); internally consistent across the Product Summary table,
+per-channel Absolute Maximum Ratings, and per-channel Electrical Characteristics
+tables — not a claim taken from a single isolated figure.
+Local copy: `PCB/datasheets/WSD3069DN56.pdf` (MD5 `2caafbfdf2a36473c6a0e67deb91fb51`).
+Section/page, as applied in this repository:
+
+- p. 1, "Product Summery" [*sic*, manufacturer's own spelling] table and
+  N-Channel "Absolute Maximum Ratings" table — `BVDSS` 30 V (N) / −30 V (P);
+  `RDSON` 15 mΩ; `ID` (continuous drain current, `TC` = 25°C) **16 A** (N) /
+  −16 A (P) — exactly the figure `README.md` cites and the BOM
+  (`PCB/LibreServo-v2.3_BOM.txt` lines 31–32, parts `M2`/`M3`) already carried.
+  Derates to 10.5 A (N) / −12.5 A (P) at `TC` = 100°C — not previously stated
+  anywhere in this repo, added as a caveat alongside the headline figure.
+- p. 1, "DFN5X6C-8 Pin Configuration" — confirms the DFN5X6, 8-pin package the BOM
+  and `PCB/kicad/LibreServo-v4.0.0.pretty/` footprint library assume, with two
+  independent MOSFETs (`D1`/`G1`/`S1` = N-channel, `D2`/`G2`/`S2` = P-channel) in
+  one package, matching the BOM's "1PCS N-Channel+1PCS P-Channel" description.
+- p. 2, N-Channel "Electrical Characteristics" table — `VGS(th)` (gate threshold)
+  1.5 V typ. at `IDS` = 250 µA — matches the BOM's "1.5V@250uA" figure exactly;
+  `RDS(ON)` 15 mΩ typ. / 19.5 mΩ max at `VGS` = 10 V, `IDS` = 10 A — matches the
+  BOM's "15mΩ@10V,10A" figure exactly.
+Cited in: `README.md`.
+Date accessed: 2026-09-13 (document supplied to this session on this date;
+manufacturer's own product page not independently re-fetched, per the network
+constraint recorded in this session — see `TODO.md` 1.4.e).
+
+Cross-repository tag note: tags **[46]–[60]** were assigned sequentially after the
 highest tag already in use in this file ([45]) because this session has no access to
 the sister repository (`Open-Secure-ESC`) to confirm whether it already cites these
 same documents under different tag numbers. Per `AGENTS.md` §2.5 an existing tag is
@@ -714,7 +748,7 @@ These documents are **not** in `PCB/datasheets/` and are known gaps:
 | Document | Why it is wanted | Tracked as |
 | --- | --- | --- |
 | Texas Instruments errata for MSPM0G3518-Q1 / MSPM0G3519-Q1 specifically | SLAZ742G covers a different die — see "Considered and found not applicable" below | `TODO.md` 1.4.d |
-| Datasheets for WSD3069DN56, AEAT-8800, ACS711 | Three `README.md` ratings are marked `UNVERIFIED` for want of them | `TODO.md` 1.4.e |
+| Datasheets for AEAT-8800, ACS711 | Two remaining `README.md` ratings are marked `UNVERIFIED` for want of them (WSD3069DN56 intaken as [60] on 2026-09-13) | `TODO.md` 1.4.e |
 | Infineon, *OPTIGA™ Trust M Release Notes*, v3.02 | Present in `Infineon/optiga-trust-m-overview` `docs/pdf/` but deliberately not intaken in the 2026-08-23 pass — no current design claim depends on a release-note item. Fetch it before relying on any firmware-revision-specific behaviour of `U7`. | `TODO.md` 4.12 |
 | Infineon, *OPTIGA™ Trust M Host Library Documentation* (`.chm`) | The Windows-help form of the [57] API reference; the header comments in the cloned source were sufficient and were used instead | (not tracked — [57] source supersedes it) |
 
