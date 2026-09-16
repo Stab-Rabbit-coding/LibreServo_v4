@@ -488,6 +488,28 @@ Legend: `[ ]` open · `[~]` in progress / partially resolved · `[x]` closed
       PALs use. Whichever is chosen must be constant-time with respect to key
       material.
 
+## 8. Variant — LibreServo_v4.1-TC (Serenity nacelle-tilt controller)
+
+Raised 2026-09-15 by Serenity-UAV Rev T5b (`docs/CR-2026-09-15-tilt-controller-variant.md`).
+The Serenity tilt actuators are now Pololu 25D HP gearmotors with a worm stage
+and a spring-applied pin brake; v4.0.0 is a servo controller and stays as-is for
+the winch/door servos.
+
+- [ ] 8.1 TC-1 Bridge, gate drive, copper and ACS711 range re-rated for a 6.0 A
+      stall / 1.4 A continuous brushed gearmotor (blocked on `TODO.md` 1.4.e
+      datasheets).
+- [ ] 8.2 TC-2 (revised T5c) AEAT-8800 kept, mounted remotely ~35 mm from the
+      board on the worm's brake collar magnet — remote sensor cable/daughter;
+      no quadrature input (gearmotor #1571 has no encoder).
+- [ ] 8.3 TC-3 Solenoid brake driver, ~0.5 A, flyback, de-energised = engaged,
+      state on the bus.
+- [ ] 8.4 TC-4 VBAT front end: verify the MPM3610 input rating against 25.2 V
+      or replace it; own 3 A fused branch.
+- [ ] 8.5 TC-5 Firmware cascade + brake sequencing + differential-tilt trip
+      input + jam detection.
+- [ ] 8.6 TC-6 Per-side sense declaration (starboard reversed).
+- [ ] 8.7 Decide variant mechanics (separate project vs populate options).
+
 ---
 
 *Seeded by Claude Opus 5 (`claude-opus-5`) under human direction, 2026-08-10,
