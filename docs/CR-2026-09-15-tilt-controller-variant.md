@@ -1,5 +1,20 @@
 # Change Request — LibreServo_v4.1-TC, nacelle-tilt controller variant
 
+> **Status: SUPERSEDED 2026-09-17 — no LibreServo variant will be built.**
+> The Serenity nacelle-tilt controller is instead an instance of the
+> project's own Open-Secure-ESC platform:
+> `Open-Secure-ESC/builds/6s/10A/BRUSHED_CAN_485_isolation/` (branch
+> `feat/tilt-controller-6s-10a-brushed` until merged), a brushed-DC build with
+> the Tier-1 DRV8874-Q1 bridge, a buck-regulated motor/solenoid rail, a
+> TPL7407L brake driver and the remote AEAT-8800-Q24 sensor header. Reason
+> (Serenity-UAV `docs/plans/2026-09-17-001-feat-tilt-controller-open-secure-esc-build-plan.md`,
+> KTD1): a variant would fork this board away from its upstream
+> (LibreServo → LibreServo_v2 → v4) and break the attribution chain, for a
+> device that is no longer a servo controller. `v4.0.0` stays as-is for the
+> winch and door servos. The requirements table below (TC-1..TC-7) is kept as
+> the decision record its figures were harvested from; TC-4 (MPM3610 rating)
+> and TC-1 (FET re-rate) were never resolved and are moot.
+
 **Raised:** 2026-09-15, from Serenity-UAV Rev T5b (owner decision D5;
 `Serenity-UAV/docs/TILT_ACTUATOR_SELECTION.md` §4).
 **Author:** Steve Griffing, PE(CSE), CISSP-ISSEP, CPP
@@ -46,10 +61,10 @@ clearance below the board, board slides in along +Y and is retained by a cable
 tie. Connectors must exit on the board's aft (+Y) or inboard (−X) edge — the
 outboard edge faces the 2 mm rail lip.
 
-## Open
+## Open (all closed as superseded, 2026-09-17)
 
-- [ ] TC-4 MPM3610 input rating vs 25.2 V — datasheet not in `PCB/datasheets/`.
-- [ ] TC-1 FET/driver re-selection and ACS711 variant — needs the WSD3069DN56
+- [x] TC-4 MPM3610 input rating vs 25.2 V — datasheet not in `PCB/datasheets/`.
+- [x] TC-1 FET/driver re-selection and ACS711 variant — needs the WSD3069DN56
       and ACS711 datasheets (`TODO.md` 1.4.e) first.
-- [ ] Decide variant mechanics: separate `LibreServo-v4.1-TC.kicad_*` project vs
+- [x] Decide variant mechanics: separate `LibreServo-v4.1-TC.kicad_*` project vs
       DNP/populate options on one layout.
