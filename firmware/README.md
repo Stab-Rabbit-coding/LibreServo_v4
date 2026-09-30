@@ -48,7 +48,7 @@ licence     MIT — Copyright (c) 2018-2024 Infineon Technologies AG
 Pinning by commit gives the same reproducibility as vendoring while keeping the
 boundary between upstream code and LibreServo code legible, as `AGENTS.md` §1
 requires.  **Do not bump the pin casually**: a host-library bump changes the
-security-relevant `COMMS` layer and must be re-reviewed against [53] §6.6 first.
+security-relevant `COMMS` layer and shall be re-reviewed against [53] §6.6 first.
 
 Files in this tree that derive from upstream carry the attribution chain in
 their own header comments.  The two that derive most directly are:
@@ -89,7 +89,7 @@ resolves **every** symbol except these eight:
 | --- | --- | --- |
 | `ls_board_time_us`, `ls_board_schedule_oneshot_us`, `ls_board_cancel_oneshot` | `pal/ls_board.h` | The control loop owns timer allocation.  A PAL that seized a `TIMG` instance now would be deciding a system resource on behalf of firmware that §7.1 has not written yet. |
 | `ls_secure_store_read/write/has_platform_binding_secret` | `pal/ls_secure_store.h` | *Where* the platform binding secret lives is a one-way, per-unit manufacturing decision — see below.  Tracked as `TODO.md` 4.13. |
-| `ls_crypto_aes128_encrypt_block`, `ls_crypto_hmac_sha256` | `pal/ls_crypto_backend.h` | AES and SHA-256 must come from a vetted implementation, not from this project.  Tracked as `TODO.md` 7.6. |
+| `ls_crypto_aes128_encrypt_block`, `ls_crypto_hmac_sha256` | `pal/ls_crypto_backend.h` | AES and SHA-256 shall come from a vetted implementation, not from this project.  Tracked as `TODO.md` 7.6. |
 
 ---
 
@@ -128,7 +128,7 @@ manufacture."  It cannot go in the KEYSTORE, for two independent reasons:
   `pal_os_datastore_read`", and the secret is up to 64 bytes — not an AES key
   width.
 
-The secret must live in MCU non-volatile memory that firmware can read,
+The secret shall live in MCU non-volatile memory that firmware can read,
 protected by flash and debug protections.  The KEYSTORE remains exactly right
 for the *derived per-session bus CMAC key* of §4.7 — an AES key, used only by
 AESADV, never read back.  Two different secrets with two different lifetimes;
@@ -196,7 +196,7 @@ the value of 128" and reaches `t_max` only at SEC = 255.  A short burst of
 protected operations at boot incurs no delay at all.
 
 What the design still holds is the conclusion, and for a better reason:
-`U7` must stay out of the servo's per-frame path.  A control loop authenticating
+`U7` shall stay out of the servo's per-frame path.  A control loop authenticating
 at tens of Hz to kHz would drive SEC to its ceiling and be throttled into
 failure.  The boot-time sequence this tree performs — one identity signature,
 one ephemeral key generation — spends two security events, and every subsequent
@@ -220,7 +220,7 @@ Two candidates, with the choice tracked as `TODO.md` 7.6:
 2. **Mbed TLS**, which is what the upstream reference PALs use
    (`examples/utilities/authenticate_chip/pal_crypt_mbedtls.c`).
 
-Whichever is chosen must be constant-time with respect to key material.
+Whichever is chosen shall be constant-time with respect to key material.
 `pal/ls_pal_crypt.c`'s own MAC comparison already is.
 
 `tests/ls_crypto_backend_openssl.c` binds the same interface to OpenSSL **for

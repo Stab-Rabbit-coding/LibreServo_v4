@@ -24,7 +24,13 @@ renumbered or updated.
 `kicad/LibreServo-v4.0.0.kicad_sch` and `.kicad_pcb` were produced by KiCad 9.0.2's
 EAGLE importer from the frozen `.sch`/`.brd`, then carried forward independently. Both
 carry `rev 4.0.0` in their title block. The Gerbers have **not** been regenerated at
-4.0.0 and must not be fabricated as if they had been.
+4.0.0 and shall not be fabricated as if they had been.
+
+> [!CAUTION]
+> The `Gerbers/` directory is production output for v2.3.1, not v4.0.0. Sending it to
+> a fab house against the current KiCad design produces boards that do not match the
+> schematic and wastes the fabrication run. Regenerate Gerbers from `kicad/` before
+> ordering hardware.
 
 ### Reading the imported symbol library
 
