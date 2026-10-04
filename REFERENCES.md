@@ -809,6 +809,26 @@ sister-repo tag** (with a superseded-tag note left here), not the other way arou
 
 ---
 
+**[60]** Department of the Navy, Commander, Naval Air Forces, *NATOPS General
+Flight and Operating Instructions Manual*, CNAF M-3710.7 (COMNAVAIRFOR M-3710.7),
+Original, 2 May 2016. Source: NATEC NATOPS library,
+https://www.mynatec.navair.navy.mil/ (access-restricted); verified against
+pages 1-52 of the issued manual (front matter, Chapter 1, Glossary, List of
+Abbreviations/Acronyms), held locally at `docs/cnaf-3710.7_1-52.pdf` in the
+`SecureControllers` repository.
+`VERIFIED` — local extract confirmed present and correctly paginated (52 pp. of
+434).
+Applied: §1.5 "Warnings, Cautions, and Notes" (p. 1-5) for callout-severity
+definitions; §1.6 "Wording" (p. 1-5) for shall/should/may-need not/will
+requirement-verb usage. This repository does not claim NATOPS compliance as a
+whole — only the §1.5/§1.6 documentation-style conventions are adopted. The
+paired active-vs-passive-voice guidance in `AGENTS.md` §4a is a project
+addition, not sourced from this document.
+Cited in: `AGENTS.md` §4a "Warnings, Cautions, Notes, and Wording".
+Date accessed: 2026-09-28.
+
+---
+
 ## Pending intake
 
 These documents are present in `PCB/datasheets/` but are either historical-only or
