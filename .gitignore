@@ -5,3 +5,7 @@ firmware/external/
 
 # Host-test build products.
 *.o
+
+# KiCad auto-backups and this repo's kicad-skill analysis cache (regenerable).
+PCB/kicad/*-backups/
+PCB/kicad/analysis/
