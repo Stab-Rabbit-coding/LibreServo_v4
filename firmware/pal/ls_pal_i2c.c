@@ -128,10 +128,15 @@ pal_status_t pal_i2c_init(const pal_i2c_t *p_i2c_context) {
     /* 3. Enable power.  [52] section 25.3.1, p. 1312: key 0x26. */
     ls_reg_write(LS_I2C0_BASE, LS_I2C_O_PWREN, LS_I2C_PWREN_KEY | LS_I2C_PWREN_ENABLE);
 
-    /* 4. Clock source and divider are left at their reset values (BUSCLK,
-     *    divide by 1) because this design has no clock tree yet — see the
-     *    UNVERIFIED note on LS_I2C_FUNCTIONAL_CLK_HZ in ls_board.h and
-     *    TODO.md 7.3.  Writing them explicitly here would encode a guess. */
+    /* 4. Clock source.  [52] section 25.3.6, p. 1317, Table 25-28: CLKSEL
+     *    resets to 0x0, which selects NEITHER BUSCLK nor MFCLK — the module
+     *    has no functional clock at all until this is written.  BUSCLK is
+     *    selected explicitly (I2C0 is a PD0 peripheral per [46] p. 74/76, so
+     *    BUSCLK here is ULPCLK, which equals MCLK/SYSOSC at 32 MHz under the
+     *    reset-default clock configuration this design relies on — see the
+     *    citation chain on LS_I2C_FUNCTIONAL_CLK_HZ in ls_board.h and
+     *    TODO.md 7.3).  CLKDIV is left at its reset value (divide by 1). */
+    ls_reg_write(LS_I2C0_BASE, LS_I2C_O_CLKSEL, LS_I2C_CLKSEL_BUSCLK_SEL);
 
     /* 5. SCL period.  Derived, not tabulated: see ls_i2c_tpr_from_clocks and
      *    [52] section 25.2.1 Equation 27. */

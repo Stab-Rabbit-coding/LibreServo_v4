@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "project": "LibreServo-v4.0.0.kicad_pro",
+  "current": "2026-09-08_1242",
+  "runs": {
+    "2026-09-08_1242": {
+      "source_hashes": {
+        "LibreServo-v4.0.0.kicad_sch": "sha256:17d4caac0d3300c7c059c84edcb7b81e9881585f55644ee82a29c6dd29dde168",
+        "LibreServo-v4.0.0.kicad_pcb": "sha256:a1c1aae4e7f94d8180b5bebd02e6f715a3c837a8f5879e3e511d3de6a025b29d"
+      },
+      "outputs": {
+        "schematic": "schematic.json",
+        "pcb": "pcb.json"
+      },
+      "scripts": {
+        "schematic": "analyze_schematic.py LibreServo-v4.0.0.kicad_sch"
+      },
+      "generated": "2026-09-08T12:42:57-04:00",
+      "pinned": false
+    }
+  }
+}

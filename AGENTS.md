@@ -87,6 +87,37 @@ cited requirement or standard — not preference or convention. If a decision
 is a judgment call with no governing standard, say so explicitly rather than
 implying one exists.
 
+## 4a. Warnings, Cautions, Notes, and Wording
+
+Callout severity and requirement-verb usage follow CNAF M-3710.7 §1.5–1.6
+(NATOPS General Flight and Operating Instructions Manual) **[60]**:
+
+- **WARNING** — a procedure or condition that may result in injury, death,
+  or destruction of hardware if not carefully observed or followed. Reserve
+  for genuine safety/asset-loss risk (e.g. handling a charged battery pack,
+  live mains, a part that can fail catastrophically under load).
+- **CAUTION** — a procedure or condition that may result in equipment
+  damage (board, MCU, secure element) with no injury or asset-loss risk.
+- **Note** — information that must be emphasized but carries no
+  WARNING/CAUTION-level risk.
+
+Never downgrade a WARNING-level risk into a Note, and never use an ad hoc
+label ("IMPORTANT:", "ATTENTION:") in place of one of these three.
+
+Requirement wording, same source **[60]**:
+
+- **Shall** — mandatory.
+- **Should** — recommended, not mandatory.
+- **May** / **need not** — optional.
+- **Will** — futurity only; never a degree of requirement. Do not write
+  "will" where "shall" is meant.
+
+**Active vs. passive voice (project addition, not in CNAF M-3710.7):** write
+procedural text in the active voice ("Torque the fastener to spec," not
+"The fastener shall be torqued to spec") except where the shall/should/
+may/will wording above requires the passive construction to state the
+requirement itself.
+
 ## 5. Review Checklist (apply before merging any change)
 
 - [ ] Every new technical claim traces to an authoritative source
@@ -95,3 +126,37 @@ implying one exists.
       accessed, or an explicit note on why a field is unverifiable
 - [ ] No invented document IDs, revisions, page numbers, or electrical values
 - [ ] Any gap is marked `UNVERIFIED` and logged in `TODO.md`, not guessed
+
+## Word Usage and Documentation Style
+
+This section applies to all documents in this repository, human- and AI-authored alike.
+
+### Voice
+
+- Use **active voice** for all directions and authoritative specification documents.
+- Use **passive voice** for all descriptive as-built documents.
+
+### Mandatory word usage
+
+| Word | Meaning | Example |
+| --- | --- | --- |
+| **shall** | The action is prescribed as mandatory. | "You shall obey the law." |
+| **will** | One thing follows another; no mandatory action is demanded. | "Friday will come after Thursday." |
+| **should** | Preferred but not mandatory. | "You may do it that way, but you should do it this way." |
+| **may** | A permissible action by an entity (AI or human). | |
+| **could** | Used only to describe the physical or performance limits of objects. | |
+
+### Call-out boxes
+
+- A call-out box labeled **WARNING** shall prominently accompany any directive, instruction, or checklist item that, if not followed, creates a hazard to life or bodily injury.
+- A call-out box labeled **CAUTION** shall accompany directives, instructions, and checklist items that, if not followed carefully, create a hazard to objects.
+- A call-out box labeled **NOTE** will accompany other items that need emphasis but do not present hazardous conditions.
+
+### Reference
+
+The shall/should/may definitions and the WARNING/CAUTION/NOTE call-out
+convention above follow CNAF M-3710.7, *NATOPS General Flight and Operating
+Instructions*, issued by Commander, Naval Air Forces (CNAF)
+(<https://www.secnav.navy.mil/doni/SECNAV%20Manuals1/3710.7%20(CNAF).pdf>).
+The will/could definitions and the active-voice/passive-voice distinction
+above are this project's own convention, not drawn from that source.
